@@ -1,0 +1,15 @@
+# PocketBase
+pb/pb_data/
+pb/pocketbase
+pb/pb_public/
+
+# Frontend
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+
+# Dev
+CLAUDE.md
+.env
+.DS_Store
+*.log
