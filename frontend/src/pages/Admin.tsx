@@ -516,7 +516,16 @@ function UpdateCard() {
       <CardContent className="space-y-3">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Installed version</span>
-          <Badge variant="outline">v{__APP_VERSION__}</Badge>
+          <a
+            href={`https://github.com/Mati-l33t/grove/releases/tag/v${__APP_VERSION__}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex"
+          >
+            <Badge variant="outline" className="cursor-pointer hover:bg-accent transition-colors">
+              v{__APP_VERSION__}
+            </Badge>
+          </a>
           {runtime === 'docker' && (
             <Badge variant="secondary" className="text-xs">Docker</Badge>
           )}
