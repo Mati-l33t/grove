@@ -32,26 +32,10 @@ Run this on your **Proxmox host** as root:
 bash <(curl -fsSL https://raw.githubusercontent.com/Mati-l33t/grove/main/proxmox/install.sh)
 ```
 
-Creates a Debian 12 LXC (2 cores, 1 GB RAM, 8 GB disk) and installs Grove automatically.  
+Creates a Debian 12 or 13 LXC (2 cores, 1 GB RAM, 8 GB disk) and installs Grove automatically.  
 Grove will be available at `http://<container-ip>:8090`.
 
-**Custom options** — set environment variables before running:
-
-```bash
-GROVE_CT_ID=200 GROVE_MEMORY=2048 GROVE_STORAGE=local-lvm \
-  bash <(curl -fsSL https://raw.githubusercontent.com/Mati-l33t/grove/main/proxmox/install.sh)
-```
-
-| Variable | Default | Description |
-|---|---|---|
-| `GROVE_CT_ID` | next available | LXC container ID |
-| `GROVE_HOSTNAME` | `grove` | Container hostname |
-| `GROVE_MEMORY` | `1024` | RAM in MB |
-| `GROVE_CORES` | `2` | CPU cores |
-| `GROVE_DISK` | `8` | Disk in GB |
-| `GROVE_STORAGE` | `local-lvm` | Proxmox storage ID |
-| `GROVE_BRIDGE` | `vmbr0` | Network bridge |
-| `GROVE_IP` | `dhcp` | Static IP in CIDR (e.g. `192.168.1.50/24`) or `dhcp` |
+The installer prompts you to choose between default settings or advanced options (container ID, hostname, disk size, CPU, RAM, bridge, static IP, VLAN).
 
 ---
 
@@ -97,16 +81,16 @@ The admin panel checks for new releases automatically and shows a notification w
 
 ---
 
-## Manual install (Debian / Ubuntu)
+## Manual install (Debian / Ubuntu / existing LXC)
 
-For non-Proxmox servers, run `install.sh` directly as root:
+Works on any Debian or Ubuntu system — including an existing Proxmox LXC. Run as root:
 
 ```bash
 git clone https://github.com/Mati-l33t/grove.git /opt/grove
 cd /opt/grove && bash install.sh
 ```
 
-Requirements: `node` (v18+), `npm`, `curl`, `unzip`.
+Requirements: `node` (v18+), `npm`, `curl`, `unzip`. The script installs any missing build tools automatically on Debian/Ubuntu.
 
 ---
 
