@@ -271,7 +271,7 @@ run_install() {
   pct exec "$CTID" -- bash -c "
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq
-    apt-get install -y -qq git curl unzip
+    apt-get install -y -qq git curl unzip build-essential python3
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
     apt-get install -y -qq nodejs
   "
