@@ -22,7 +22,6 @@ if (process.argv.includes('--setup')) {
     const keys = JSON.parse(fs.readFileSync(KEYS_FILE, 'utf8'))
     fs.mkdirSync(PB_PUBLIC, { recursive: true })
     fs.writeFileSync(path.join(PB_PUBLIC, 'vapid-public.txt'), keys.publicKey)
-    process.stdout.write(keys.publicKey + '\n')
     process.exit(0)
 }
 

@@ -19,6 +19,7 @@ echo "==> Installing Grove..."
 # build-essential and python3 are required to compile better-sqlite3 native addon
 if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
+    export LC_ALL=C
     echo "==> Installing system dependencies..."
     apt-get update -qq
     apt-get install -y -qq curl unzip build-essential python3
