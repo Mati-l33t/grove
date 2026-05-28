@@ -1,0 +1,16 @@
+[Unit]
+Description=Grove Family Organizer
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/grove/pb
+ExecStart=/opt/grove/pb/pocketbase serve --http=0.0.0.0:8090
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

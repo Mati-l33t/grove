@@ -1,0 +1,16 @@
+[Unit]
+Description=Grove Reminder Service
+After=grove.service
+Requires=grove.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/grove
+ExecStart=/usr/bin/node /opt/grove/reminder.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

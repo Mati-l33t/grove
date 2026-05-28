@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#18181b" />
+    <title>Grove — Offline</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root { color-scheme: dark; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #09090b;
+        color: #fafafa;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 2rem;
+        text-align: center;
+      }
+      svg { opacity: 0.4; }
+      h1 { font-size: 1.25rem; font-weight: 600; }
+      p { font-size: 0.875rem; color: #a1a1aa; max-width: 280px; line-height: 1.6; }
+      button {
+        margin-top: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        border-radius: 0.5rem;
+        border: 1px solid #3f3f46;
+        background: transparent;
+        color: #fafafa;
+        font-size: 0.875rem;
+        cursor: pointer;
+      }
+      button:hover { background: #27272a; }
+    </style>
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="2" y1="2" x2="22" y2="22"/>
+      <path d="M8.5 8.5A5 5 0 0 0 7 12H3l2 3h4"/>
+      <path d="M15.5 8.5c.7.4 1.3 1 1.7 1.7"/>
+      <path d="M21 12h-4l-3 4H9"/>
+    </svg>
+    <h1>You're offline</h1>
+    <p>Grove couldn't reach the server. Check your connection and try again.</p>
+    <button onclick="location.reload()">Retry</button>
+  </body>
+</html>

@@ -2,6 +2,8 @@
 pb/pb_data/
 pb/pocketbase
 pb/pb_public/
+pb/CHANGELOG.md
+pb/LICENSE.md
 
 # Frontend
 frontend/dist/
@@ -11,5 +13,8 @@ frontend/.env
 # Dev
 CLAUDE.md
 .env
+vapid-keys.json
 .DS_Store
 *.log
+*.tsbuildinfo
+node_modules/

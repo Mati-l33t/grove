@@ -1,0 +1,12 @@
+services:
+  grove:
+    image: ghcr.io/mati-l33t/grove:latest
+    container_name: grove
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - grove_data:/data
+
+volumes:
+  grove_data:
