@@ -122,6 +122,8 @@ default_settings() {
   GATE=""
   VLAN_TAG=""
   UNPRIVILEGED="$var_unprivileged"
+  ROOT_PASSWORD=""
+  AUTOLOGIN=1
 
   echo -e "${TAB}${BOLD}⚙️  Using Default Settings${CL}"
   echo -e "${TAB}🆔  Container ID:  ${BL}${CTID}${CL}"
@@ -131,6 +133,7 @@ default_settings() {
   echo -e "${TAB}🛠️  RAM:           ${BL}${RAM_SIZE} MB${CL}"
   echo -e "${TAB}🌉  Bridge:        ${BL}${BRG}${CL}"
   echo -e "${TAB}📡  IP:            ${BL}DHCP${CL}"
+  echo -e "${TAB}🔑  Root login:    ${BL}autologin (no password)${CL}"
   echo ""
 }
 
@@ -192,6 +195,19 @@ advanced_settings() {
 
   UNPRIVILEGED="$var_unprivileged"
 
+  local pw1 pw2
+  pw1=$(whiptail --backtitle "Grove Installer" --title "ROOT PASSWORD" \
+    --passwordbox "\nSet root password for the container:" 10 58 "" 3>&1 1>&2 2>&3) || exit
+  pw2=$(whiptail --backtitle "Grove Installer" --title "ROOT PASSWORD" \
+    --passwordbox "\nConfirm root password:" 10 58 "" 3>&1 1>&2 2>&3) || exit
+  if [ "$pw1" != "$pw2" ]; then
+    whiptail --backtitle "Grove Installer" --title "ERROR" \
+      --msgbox "\nPasswords do not match. Please run the installer again." 10 58
+    exit 1
+  fi
+  ROOT_PASSWORD="$pw1"
+  AUTOLOGIN=0
+
   echo -e "${TAB}${BOLD}🧩 Using Advanced Settings${CL}"
   echo -e "${TAB}🆔  Container ID:  ${BL}${CTID}${CL}"
   echo -e "${TAB}🏠  Hostname:      ${BL}${HN}${CL}"
@@ -200,6 +216,7 @@ advanced_settings() {
   echo -e "${TAB}🛠️  RAM:           ${BL}${RAM_SIZE} MB${CL}"
   echo -e "${TAB}🌉  Bridge:        ${BL}${BRG}${CL}"
   echo -e "${TAB}📡  IP:            ${BL}${NET}${CL}"
+  echo -e "${TAB}🔑  Root password: set"
   echo ""
 }
 
@@ -239,6 +256,21 @@ build_container() {
   pct start "$CTID"
   sleep 5
   msg_ok "Container started"
+
+  if [ "$AUTOLOGIN" = "1" ]; then
+    msg_info "Configuring autologin"
+    pct exec "$CTID" -- bash -c "
+      mkdir -p /etc/systemd/system/container-getty@1.service.d
+      printf '[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin root --noclear --keep-baud tty%%I 115200,38400,9600 \$TERM\n' \
+        > /etc/systemd/system/container-getty@1.service.d/override.conf
+      systemctl daemon-reload
+    "
+    msg_ok "Autologin configured"
+  else
+    msg_info "Setting root password"
+    pct exec "$CTID" -- bash -c "echo 'root:${ROOT_PASSWORD}' | chpasswd"
+    msg_ok "Root password set"
+  fi
 
   msg_info "Waiting for network"
   local tries=0
