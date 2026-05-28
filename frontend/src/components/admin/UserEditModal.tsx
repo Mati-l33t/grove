@@ -132,7 +132,7 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? 'New user' : 'Edit user'}</DialogTitle>
         </DialogHeader>

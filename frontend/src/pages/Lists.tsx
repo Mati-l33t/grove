@@ -170,7 +170,7 @@ export default function Lists() {
 
       {/* Create list dialog */}
       <Dialog open={showCreate} onOpenChange={(o) => { if (!o) closeCreate() }}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{createdListId ? `Add items to "${newName}"` : 'New list'}</DialogTitle>
           </DialogHeader>

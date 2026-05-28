@@ -54,7 +54,7 @@ export default function HouseholdSetupDialog({ open, onSkip }: HouseholdSetupDia
 
   return (
     <Dialog open={open}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Set up your household</DialogTitle>
           <DialogDescription>

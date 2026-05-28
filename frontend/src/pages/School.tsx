@@ -658,7 +658,7 @@ export default function School() {
 
       {/* ── Add/Edit child dialog ─────────────────────────────────────────────── */}
       <Dialog open={childDialogOpen} onOpenChange={setChildDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingChild ? 'Edit child' : 'Add child'}</DialogTitle>
           </DialogHeader>
@@ -836,7 +836,7 @@ export default function School() {
 
       {/* ── Assignment dialog ─────────────────────────────────────────────────── */}
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingAssignment ? 'Edit assignment' : 'Add assignment'}</DialogTitle>
           </DialogHeader>

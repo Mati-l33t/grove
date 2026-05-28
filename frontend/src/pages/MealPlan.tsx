@@ -613,7 +613,7 @@ export default function MealPlanPage() {
         open={showAddToList}
         onOpenChange={(o) => { if (!o) { setShowAddToList(false); setTargetListId('') } }}
       >
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add ingredients to list</DialogTitle>
           </DialogHeader>

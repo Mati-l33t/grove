@@ -156,7 +156,7 @@ export default function Recipes() {
       </div>
 
       <Dialog open={showImport} onOpenChange={(open) => { setShowImport(open); if (!open) setImportUrl('') }}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Import recipe from URL</DialogTitle>
           </DialogHeader>

@@ -251,7 +251,7 @@ export default function ListDetail() {
 
       {/* Edit dialog */}
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit list</DialogTitle>
           </DialogHeader>
@@ -334,7 +334,7 @@ export default function ListDetail() {
 
       {/* Delete confirm dialog */}
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Delete list?</DialogTitle>
           </DialogHeader>
