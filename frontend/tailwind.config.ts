@@ -60,6 +60,14 @@ const config: Config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      keyframes: {
+        'border-beam': {
+          '100%': { 'offset-distance': '100%' },
+        },
+      },
+      animation: {
+        'border-beam': 'border-beam calc(var(--duration)*1s) infinite linear',
+      },
     },
   },
   plugins: [],

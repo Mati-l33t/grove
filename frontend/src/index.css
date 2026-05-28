@@ -57,6 +57,34 @@
   body { @apply bg-background text-foreground font-sans antialiased; }
 }
 
+/* ── Themed scrollbars ───────────────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ── AuroraText gradient shift ───────────────────────────────────────────── */
+@keyframes aurora-shift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* ── DiaTextReveal per-character entrance ────────────────────────────────── */
+@keyframes dia-reveal {
+  0%   { opacity: 0; transform: scale(0.15) rotate(-25deg); }
+  55%  { transform: scale(1.12) rotate(3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
 /* ── Greeting typewriter cursor ──────────────────────────────────────────── */
 @keyframes cursor-blink {
   0%, 100% { opacity: 1; }
