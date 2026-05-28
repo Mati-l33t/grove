@@ -252,6 +252,10 @@ build_container() {
     --timezone    "$tz"
   msg_ok "LXC container ${CTID} created"
 
+  msg_info "Tagging container"
+  pct set "$CTID" --tags "proxmox-scripts;grove" >/dev/null 2>&1 || true
+  msg_ok "Tags set"
+
   msg_info "Starting container"
   pct start "$CTID"
   sleep 5
@@ -271,6 +275,24 @@ build_container() {
     pct exec "$CTID" -- bash -c "echo 'root:${ROOT_PASSWORD}' | chpasswd"
     msg_ok "Root password set"
   fi
+
+  msg_info "Setting login banner"
+  cat > /tmp/grove-motd << 'EOF'
+
+   ██████╗ ██████╗  ██████╗ ██╗   ██╗███████╗
+  ██╔════╝ ██╔══██╗██╔═══██╗██║   ██║██╔════╝
+  ██║  ███╗██████╔╝██║   ██║██║   ██║█████╗
+  ██║   ██║██╔══██╗██║   ██║╚██╗ ██╔╝██╔══╝
+  ╚██████╔╝██║  ██║╚██████╔╝ ╚████╔╝ ███████╗
+   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚═══╝  ╚══════╝
+
+  Grove LXC Container
+  https://github.com/Mati-l33t/grove
+
+EOF
+  pct push "$CTID" /tmp/grove-motd /etc/motd
+  rm -f /tmp/grove-motd
+  msg_ok "Login banner set"
 
   msg_info "Waiting for network"
   local tries=0
