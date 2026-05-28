@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
+import { DiaTextReveal } from '@/components/ui/dia-text-reveal'
 import { useTodayEvents, useUpcomingWeekEvents } from '@/hooks/useEvents'
 import { useHour12, formatTime } from '@/lib/timeFormat'
 import { useActiveLists, useCreateListItem } from '@/hooks/useLists'
@@ -98,9 +99,6 @@ export default function Today() {
   }, [typed, doneTyping])
 
   const typedPrefix = greetingPrefix.slice(0, Math.min(typed, greetingPrefix.length))
-  const typedName = typed > greetingPrefix.length
-    ? firstName.slice(0, typed - greetingPrefix.length)
-    : ''
 
   const [showScrollTop, setShowScrollTop] = useState(false)
   const handleScroll = useCallback(() => setShowScrollTop(window.scrollY > 220), [])
@@ -193,7 +191,9 @@ export default function Today() {
             <div className="flex items-center justify-between gap-2">
               <h1 className="text-2xl font-bold truncate">
                 {typedPrefix}
-                {typedName && <span style={{ color: userColor }}>{typedName}</span>}
+                {typed >= greetingPrefix.length && firstName && (
+                  <DiaTextReveal text={firstName} colors={[userColor]} />
+                )}
                 {cursorVisible && <span className="greeting-cursor">|</span>}
               </h1>
               {/* desktop: full widget right of greeting */}
