@@ -54,7 +54,6 @@ function defaultPrefs(saved: NotificationPrefs | undefined): NotificationPrefs {
 }
 
 function tabFromPath(pathname: string): string {
-  if (pathname === '/settings/household') return 'household'
   if (pathname === '/settings/notifications') return 'notifications'
   return 'profile'
 }
@@ -84,7 +83,6 @@ export default function Settings() {
   const [prefs, setPrefs] = useState<NotificationPrefs>(() => defaultPrefs(user?.notification_prefs))
   const [savingPrefs, setSavingPrefs] = useState(false)
 
-  // Refresh prefs state if the user record is updated externally
   useEffect(() => {
     setPrefs(defaultPrefs(user?.notification_prefs))
   }, [user?.notification_prefs])
@@ -185,42 +183,35 @@ export default function Settings() {
     <>
       <TopBar title="Settings" />
 
-      <div className="max-w-xl mx-auto p-4 space-y-6">
+      <div className="max-w-5xl mx-auto p-4 md:px-8 space-y-6">
         <Tabs
           defaultValue={tabFromPath(location.pathname)}
           onValueChange={(v) => {
-            if (v === 'household') navigate('/settings/household', { replace: true })
-            else if (v === 'notifications') navigate('/settings/notifications', { replace: true })
+            if (v === 'notifications') navigate('/settings/notifications', { replace: true })
             else navigate('/settings', { replace: true })
           }}
         >
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="household">Household</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
-          {/* Profile tab */}
-          <TabsContent value="profile" className="space-y-6 pt-2">
+          {/* ── Profile tab ── */}
+          <TabsContent value="profile" className="pt-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Your profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                {/* Avatar */}
+              <CardContent className="pt-6 space-y-6">
+
+                {/* Avatar row */}
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
-                    className="relative group focus:outline-none"
+                    className="relative group focus:outline-none shrink-0"
                     onClick={() => fileRef.current?.click()}
                     aria-label="Change avatar"
                   >
-                    <Avatar className="h-16 w-16">
+                    <Avatar className="h-14 w-14">
                       {avatarUrl && <AvatarImage src={avatarUrl} alt={user?.name} />}
-                      <AvatarFallback
-                        style={{ backgroundColor: selectedColor }}
-                        className="text-white text-lg"
-                      >
+                      <AvatarFallback style={{ backgroundColor: selectedColor }} className="text-white text-lg">
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -228,243 +219,222 @@ export default function Settings() {
                       <Camera className="h-5 w-5 text-white" />
                     </span>
                   </button>
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                   <div>
                     <p className="text-sm font-medium">{user?.name}</p>
                     <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
 
-                {/* Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="profile-name">Name</Label>
-                  <Input
-                    id="profile-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your name"
-                  />
-                </div>
+                {/* Two-column grid for form fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
 
-                {/* Username */}
-                <div className="space-y-2">
-                  <Label htmlFor="profile-username">Login username</Label>
-                  <Input
-                    id="profile-username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="your.username"
-                    autoComplete="username"
-                  />
-                </div>
-
-                {/* Color picker */}
-                <div className="space-y-2">
-                  <Label>Calendar color</Label>
-                  <div className="flex gap-2 flex-wrap">
-                    {MEMBER_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className="h-8 w-8 rounded-full ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-transform hover:scale-110"
-                        style={{ backgroundColor: color }}
-                        aria-label={color}
-                        onClick={() => setSelectedColor(color)}
-                      >
-                        {selectedColor === color && (
-                          <span className="flex items-center justify-center h-full w-full text-white text-xs font-bold">✓</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Time format */}
-                <div className="space-y-2">
-                  <Label>Time format</Label>
-                  <div className="flex gap-2">
-                    {([
-                      { key: 'auto', label: 'Auto' },
-                      { key: '24h', label: '24h' },
-                      { key: '12h', label: '12h' },
-                    ] as const).map(({ key, label }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setTimeFormat(key)}
-                        className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                          timeFormat === key
-                            ? 'bg-primary/10 text-primary border-primary/40'
-                            : 'border-input text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Auto follows your browser locale.
-                  </p>
-                </div>
-
-                {/* Week start */}
-                <div className="space-y-2">
-                  <Label>Week starts on</Label>
-                  <div className="flex gap-2">
-                    {([
-                      { key: 'monday', label: 'Monday' },
-                      { key: 'sunday', label: 'Sunday' },
-                    ] as const).map(({ key, label }) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setWeekStart(key)}
-                        className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                          weekStart === key
-                            ? 'bg-primary/10 text-primary border-primary/40'
-                            : 'border-input text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Weather */}
-                <div className="space-y-3">
-                  <Label>Weather on Today page</Label>
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={showWeather}
-                      onChange={(e) => setShowWeather(e.target.checked)}
-                      className="h-4 w-4 accent-primary cursor-pointer rounded"
-                    />
-                    <span className="text-sm">Show current weather</span>
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Uses your browser's location if permission is granted, otherwise falls back to approximate IP-based location.
-                  </p>
-                  {showWeather && (
-                    <div className="flex gap-2 pt-1">
-                      {([
-                        { key: 'celsius' as const, label: '°C — Celsius' },
-                        { key: 'fahrenheit' as const, label: '°F — Fahrenheit' },
-                      ]).map(({ key, label }) => (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => setWeatherUnit(key)}
-                          className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                            weatherUnit === key
-                              ? 'bg-primary/10 text-primary border-primary/40'
-                              : 'border-input text-muted-foreground hover:text-foreground'
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
+                  {/* Left col */}
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="profile-name">Name</Label>
+                      <Input
+                        id="profile-name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                      />
                     </div>
-                  )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="profile-username">Login username</Label>
+                      <Input
+                        id="profile-username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="your.username"
+                        autoComplete="username"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Time format</Label>
+                      <div className="flex gap-2">
+                        {([
+                          { key: 'auto', label: 'Auto' },
+                          { key: '24h',  label: '24h'  },
+                          { key: '12h',  label: '12h'  },
+                        ] as const).map(({ key, label }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setTimeFormat(key)}
+                            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                              timeFormat === key
+                                ? 'bg-primary/10 text-primary border-primary/40'
+                                : 'border-input text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Auto follows your browser locale.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Week starts on</Label>
+                      <div className="flex gap-2">
+                        {([
+                          { key: 'monday', label: 'Monday' },
+                          { key: 'sunday', label: 'Sunday' },
+                        ] as const).map(({ key, label }) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setWeekStart(key)}
+                            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                              weekStart === key
+                                ? 'bg-primary/10 text-primary border-primary/40'
+                                : 'border-input text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right col */}
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <Label>Calendar color</Label>
+                      <div className="flex gap-2 flex-wrap">
+                        {MEMBER_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            className="h-8 w-8 rounded-full ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-transform hover:scale-110"
+                            style={{ backgroundColor: color }}
+                            aria-label={color}
+                            onClick={() => setSelectedColor(color)}
+                          >
+                            {selectedColor === color && (
+                              <span className="flex items-center justify-center h-full w-full text-white text-xs font-bold">✓</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Weather on Today page</Label>
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={showWeather}
+                          onChange={(e) => setShowWeather(e.target.checked)}
+                          className="h-4 w-4 accent-primary cursor-pointer rounded"
+                        />
+                        <span className="text-sm">Show current weather</span>
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        Uses your browser's location if permission is granted, otherwise falls back to approximate IP-based location.
+                      </p>
+                      {showWeather && (
+                        <div className="flex gap-2">
+                          {([
+                            { key: 'celsius'    as const, label: '°C — Celsius'    },
+                            { key: 'fahrenheit' as const, label: '°F — Fahrenheit' },
+                          ]).map(({ key, label }) => (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => setWeatherUnit(key)}
+                              className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                                weatherUnit === key
+                                  ? 'bg-primary/10 text-primary border-primary/40'
+                                  : 'border-input text-muted-foreground hover:text-foreground'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <Button onClick={handleSaveProfile} disabled={saving || !name.trim()}>
-                  {saving ? 'Saving…' : 'Save changes'}
-                </Button>
+                {/* Household section */}
+                <Separator />
+
+                {household ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <Users className="h-5 w-5 text-muted-foreground shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">{household.name}</p>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <code className="text-sm font-mono font-bold tracking-widest text-primary">
+                            {household.invite_code}
+                          </code>
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={copyInviteCode} aria-label="Copy invite code">
+                            <Copy className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Share this code so others can join.</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:text-destructive shrink-0"
+                      onClick={handleLeaveHousehold}
+                      disabled={leavingHousehold}
+                    >
+                      {leavingHousehold ? 'Leaving…' : 'Leave household'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <Users className="h-5 w-5 text-muted-foreground shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">No household</p>
+                        <p className="text-xs text-muted-foreground">
+                          Create or join a household to share calendars, lists, and recipes.
+                        </p>
+                      </div>
+                    </div>
+                    <Button size="sm" className="shrink-0" onClick={() => setShowHouseholdSetup(true)}>
+                      Set up household
+                    </Button>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <Separator />
+
+                <div className="flex items-center justify-between">
+                  <Button onClick={handleSaveProfile} disabled={saving || !name.trim()}>
+                    {saving ? 'Saving…' : 'Save changes'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                    onClick={() => { logout(); navigate('/login') }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </Button>
+                </div>
+
               </CardContent>
             </Card>
-
-            <div>
-              <Button
-                variant="destructive"
-                className="gap-2"
-                onClick={() => {
-                  logout()
-                  navigate('/login')
-                }}
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </Button>
-            </div>
           </TabsContent>
 
-          {/* Household tab */}
-          <TabsContent value="household" className="space-y-4 pt-2">
-            {household ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    {household.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                      Invite code
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <code className="text-lg font-mono font-bold tracking-widest text-primary">
-                        {household.invite_code}
-                      </code>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        onClick={copyInviteCode}
-                        aria-label="Copy invite code"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Share this code so others can join your household.
-                    </p>
-                  </div>
+          {/* ── Notifications tab ── */}
+          <TabsContent value="notifications" className="pt-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
 
-                  <Separator />
-
-                  <Button
-                    variant="outline"
-                    className="text-destructive hover:text-destructive"
-                    onClick={handleLeaveHousehold}
-                    disabled={leavingHousehold}
-                  >
-                    {leavingHousehold ? 'Leaving…' : 'Leave household'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="py-8 flex flex-col items-center gap-4 text-center">
-                  <Users className="h-10 w-10 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">No household</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Create or join a household to share calendars, lists, and recipes with your
-                      family.
-                    </p>
-                  </div>
-                  <Button onClick={() => setShowHouseholdSetup(true)}>
-                    Set up household
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Notifications tab */}
-          <TabsContent value="notifications" className="space-y-4 pt-2">
-            {/* Push notifications */}
-            {notifSupported && (
+              {/* Push notifications — left */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
@@ -473,7 +443,12 @@ export default function Settings() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {notifPermission === 'denied' ? (
+                  {!notifSupported ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <BellOff className="h-4 w-4 shrink-0" />
+                      Not supported in this browser.
+                    </div>
+                  ) : notifPermission === 'denied' ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <BellOff className="h-4 w-4 shrink-0" />
                       Blocked in browser settings. Open your browser's site settings to allow notifications.
@@ -522,33 +497,34 @@ export default function Settings() {
                   )}
                 </CardContent>
               </Card>
-            )}
 
-            {/* Email notifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Email notifications</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-xs text-muted-foreground">
-                  Sent to <span className="font-medium text-foreground">{user?.email}</span>.
-                  Requires SMTP to be configured by an admin.
-                </p>
-                <div className="space-y-2">
-                  {EMAIL_NOTIF_ITEMS.map(({ key, label }) => (
-                    <label key={key} className="flex items-center gap-3 cursor-pointer select-none py-1">
-                      <input
-                        type="checkbox"
-                        checked={prefs[key] === true}
-                        onChange={(e) => setPref(key, e.target.checked)}
-                        className="h-4 w-4 accent-primary cursor-pointer rounded shrink-0"
-                      />
-                      <span className="text-sm">{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+              {/* Email notifications — right */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Email notifications</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Sent to <span className="font-medium text-foreground">{user?.email}</span>.
+                    Requires SMTP to be configured by an admin.
+                  </p>
+                  <div className="space-y-2">
+                    {EMAIL_NOTIF_ITEMS.map(({ key, label }) => (
+                      <label key={key} className="flex items-center gap-3 cursor-pointer select-none py-1">
+                        <input
+                          type="checkbox"
+                          checked={prefs[key] === true}
+                          onChange={(e) => setPref(key, e.target.checked)}
+                          className="h-4 w-4 accent-primary cursor-pointer rounded shrink-0"
+                        />
+                        <span className="text-sm">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+            </div>
 
             <Button onClick={handleSavePrefs} disabled={savingPrefs}>
               {savingPrefs ? 'Saving…' : 'Save notification settings'}
