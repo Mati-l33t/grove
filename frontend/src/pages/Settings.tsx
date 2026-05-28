@@ -350,7 +350,7 @@ export default function Settings() {
                     <span className="text-sm">Show current weather</span>
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    Uses your browser's location (you'll be asked for permission).
+                    Uses your browser's location if permission is granted, otherwise falls back to approximate IP-based location.
                   </p>
                   {showWeather && (
                     <div className="flex gap-2 pt-1">

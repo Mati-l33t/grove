@@ -40,28 +40,46 @@ function wmoToWeather(code: number, day: boolean): { icon: string; description: 
   return                   { icon: day ? stormDay  : stormNight,  description: 'Thunderstorm' }
 }
 
-function fetchWeather(unit: string): Promise<WeatherData | null> {
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude: lat, longitude: lon } = pos.coords
-          const res = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-            `&current=temperature_2m,weather_code&temperature_unit=${unit}`
-          )
-          if (!res.ok) { resolve(null); return }
-          const data = await res.json()
-          const temp = Math.round(data.current.temperature_2m)
-          const code = data.current.weather_code
-          resolve({ temp, ...wmoToWeather(code, isDay()) })
-        } catch {
-          resolve(null)
-        }
-      },
-      () => resolve(null)
+async function getCoords(): Promise<{ lat: number; lon: number } | null> {
+  // Try browser geolocation first (requires HTTPS or localhost)
+  if (navigator.geolocation) {
+    try {
+      const pos = await new Promise<GeolocationPosition>((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 })
+      )
+      return { lat: pos.coords.latitude, lon: pos.coords.longitude }
+    } catch {
+      // Denied or unavailable (e.g. HTTP) — fall through to IP lookup
+    }
+  }
+  // Fall back to IP-based geolocation (works on HTTP, city-level accuracy)
+  try {
+    const r = await fetch('https://ipapi.co/json/')
+    if (!r.ok) return null
+    const d = await r.json() as { latitude?: number; longitude?: number }
+    if (!d.latitude || !d.longitude) return null
+    return { lat: d.latitude, lon: d.longitude }
+  } catch {
+    return null
+  }
+}
+
+async function fetchWeather(unit: string): Promise<WeatherData | null> {
+  try {
+    const coords = await getCoords()
+    if (!coords) return null
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}` +
+      `&current=temperature_2m,weather_code&temperature_unit=${unit}`
     )
-  })
+    if (!res.ok) return null
+    const data = await res.json()
+    const temp = Math.round(data.current.temperature_2m)
+    const code = data.current.weather_code
+    return { temp, ...wmoToWeather(code, isDay()) }
+  } catch {
+    return null
+  }
 }
 
 interface Props {
