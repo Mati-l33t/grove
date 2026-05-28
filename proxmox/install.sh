@@ -278,19 +278,24 @@ build_container() {
 
   msg_info "Setting login banner"
   cat > /tmp/grove-motd << 'EOF'
-
-   ██████╗ ██████╗  ██████╗ ██╗   ██╗███████╗
-  ██╔════╝ ██╔══██╗██╔═══██╗██║   ██║██╔════╝
-  ██║  ███╗██████╔╝██║   ██║██║   ██║█████╗
-  ██║   ██║██╔══██╗██║   ██║╚██╗ ██╔╝██╔══╝
-  ╚██████╔╝██║  ██║╚██████╔╝ ╚████╔╝ ███████╗
-   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚═══╝  ╚══════╝
-
-  Grove LXC Container
-  https://github.com/Mati-l33t/grove
-
+#!/bin/sh
+IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+printf '\n'
+printf '   ██████╗ ██████╗  ██████╗ ██╗   ██╗███████╗\n'
+printf '  ██╔════╝ ██╔══██╗██╔═══██╗██║   ██║██╔════╝\n'
+printf '  ██║  ███╗██████╔╝██║   ██║██║   ██║█████╗\n'
+printf '  ██║   ██║██╔══██╗██║   ██║╚██╗ ██╔╝██╔══╝\n'
+printf '  ╚██████╔╝██║  ██║╚██████╔╝ ╚████╔╝ ███████╗\n'
+printf '   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝  ╚═══╝  ╚══════╝\n'
+printf '\n'
+printf '  Grove LXC Container\n'
+printf '  Web UI:  http://%s:8090\n' "$IP"
+printf '  GitHub:  https://github.com/Mati-l33t/grove\n'
+printf '  Scripts: https://proxmox-scripts.com\n'
+printf '\n'
 EOF
-  pct push "$CTID" /tmp/grove-motd /etc/motd
+  pct push "$CTID" /tmp/grove-motd /etc/profile.d/grove-welcome.sh
+  pct exec "$CTID" -- bash -c "chmod +x /etc/profile.d/grove-welcome.sh && truncate -s 0 /etc/motd"
   rm -f /tmp/grove-motd
   msg_ok "Login banner set"
 
