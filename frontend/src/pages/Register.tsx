@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { BorderBeam } from '@/components/ui/border-beam'
 import HouseholdSetupDialog from '@/components/auth/HouseholdSetupDialog'
 import type { User } from '@/types'
 
@@ -80,7 +81,7 @@ export default function Register() {
         </div>
 
         {registrationClosed ? (
-          <Card>
+          <Card className="relative overflow-hidden">
             <CardContent className="py-8 flex flex-col items-center gap-3 text-center">
               <p className="font-medium">Registration is closed</p>
               <p className="text-sm text-muted-foreground">
@@ -90,10 +91,11 @@ export default function Register() {
                 <Link to="/login">Sign in instead</Link>
               </Button>
             </CardContent>
+            <BorderBeam duration={6} size={300} />
           </Card>
         ) : (
 
-          <Card>
+          <Card className="relative overflow-hidden">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl">Create account</CardTitle>
             <CardDescription>Get started with Grove today</CardDescription>
@@ -169,6 +171,7 @@ export default function Register() {
               </Button>
             </form>
           </CardContent>
+          <BorderBeam duration={6} size={300} />
           </Card>
 
         )}

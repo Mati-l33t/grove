@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { BorderBeam } from '@/components/ui/border-beam'
 import type { User } from '@/types'
 
 export default function Login() {
@@ -58,7 +59,7 @@ export default function Login() {
           <p className="text-sm text-muted-foreground">Your family organizer</p>
         </div>
 
-        <Card>
+        <Card className="relative overflow-hidden">
           <CardHeader className="pb-4">
             <CardTitle className="text-xl">Sign in</CardTitle>
             <CardDescription>Enter your credentials to continue</CardDescription>
@@ -94,6 +95,7 @@ export default function Login() {
               </Button>
             </form>
           </CardContent>
+          <BorderBeam duration={6} size={300} />
         </Card>
 
         <p className="text-center text-sm text-muted-foreground">
