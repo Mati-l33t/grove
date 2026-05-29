@@ -1,5 +1,5 @@
 # ── Stage 1: build frontend ───────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /build
 COPY frontend/package*.json ./
@@ -8,12 +8,12 @@ COPY frontend/ ./
 RUN npm run build
 
 # ── Stage 2: Grove runtime ────────────────────────────────────────────────────
-FROM node:20-alpine
+FROM node:22-alpine
 
 ARG PB_VERSION=0.22.27
 ARG TARGETARCH
 
-RUN apk add --no-cache ca-certificates curl unzip python3 make g++
+RUN apk add --no-cache ca-certificates curl unzip
 
 RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") \
     && curl -fsSL \
@@ -23,11 +23,9 @@ RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") \
     && rm /tmp/pb.zip \
     && chmod +x /app/pocketbase
 
-# Reminder service — install before removing build tools (better-sqlite3 needs them)
 COPY package.json  /app/package.json
 COPY reminder.js   /app/reminder.js
-RUN cd /app && npm install --silent \
-    && apk del python3 make g++
+RUN cd /app && npm install --silent
 
 # Pre-built frontend (seeded to data volume by entrypoint on every start)
 COPY --from=builder /build/dist /app/pb_public_seed

@@ -3,7 +3,7 @@
 
 const webpush = require('web-push')
 const nodemailer = require('nodemailer')
-const Database = require('better-sqlite3')
+const { DatabaseSync } = require('node:sqlite')
 const fs = require('fs')
 const path = require('path')
 
@@ -39,7 +39,7 @@ webpush.setVapidDetails('mailto:grove@localhost', publicKey, privateKey)
 
 function ensureSentTable() {
     try {
-        const rw = new Database(DB_FILE, { readonly: false })
+        const rw = new DatabaseSync(DB_FILE)
         rw.prepare(`
             CREATE TABLE IF NOT EXISTS grove_notification_sent (
                 hash TEXT PRIMARY KEY,
@@ -62,7 +62,7 @@ function isSent(db, hash) {
 
 function markSent(hash) {
     try {
-        const rw = new Database(DB_FILE, { readonly: false })
+        const rw = new DatabaseSync(DB_FILE)
         rw.prepare(`INSERT OR IGNORE INTO grove_notification_sent (hash, sent_at) VALUES (?, ?)`).run(hash, Date.now())
         rw.close()
     } catch {}
@@ -190,7 +190,7 @@ async function sendPushToUser(db, userId, payload) {
             } catch (err) {
                 if (err.statusCode === 410 || err.statusCode === 404) {
                     try {
-                        const rw = new Database(DB_FILE, { readonly: false })
+                        const rw = new DatabaseSync(DB_FILE)
                         rw.prepare(`DELETE FROM push_subscriptions WHERE endpoint = ?`).run(sub.endpoint)
                         rw.close()
                     } catch {}
@@ -433,7 +433,7 @@ async function checkReminders() {
 
     let db
     try {
-        db = new Database(DB_FILE, { readonly: true, fileMustExist: true })
+        db = new DatabaseSync(DB_FILE, { readOnly: true })
     } catch {
         return
     }
@@ -501,7 +501,7 @@ async function checkNewNotifications() {
 
     let db
     try {
-        db = new Database(DB_FILE, { readonly: true, fileMustExist: true })
+        db = new DatabaseSync(DB_FILE, { readOnly: true })
     } catch {
         return
     }
@@ -533,7 +533,7 @@ async function sendWelcomeEmails() {
 
     let db
     try {
-        db = new Database(DB_FILE, { readonly: true, fileMustExist: true })
+        db = new DatabaseSync(DB_FILE, { readOnly: true })
     } catch {
         return
     }
@@ -568,7 +568,7 @@ async function sendWelcomeEmails() {
                 })
                 console.log(`[${new Date().toISOString()}] Welcome email sent to ${user.email}`)
 
-                const rw = new Database(DB_FILE, { readonly: false })
+                const rw = new DatabaseSync(DB_FILE)
                 rw.prepare(`UPDATE users SET welcome_sent = 1 WHERE id = ?`).run(user.id)
                 rw.close()
             } catch (err) {

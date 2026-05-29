@@ -333,7 +333,7 @@ run_install() {
     export LC_ALL=C
     apt-get update -qq
     apt-get install -y -qq git curl unzip build-essential python3
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - >/dev/null 2>&1
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
     apt-get install -y -qq nodejs
   "
   msg_ok "Dependencies installed"

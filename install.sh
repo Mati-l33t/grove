@@ -16,19 +16,29 @@ fi
 echo "==> Installing Grove..."
 
 # ── System dependencies ────────────────────────────────────────────────────────
-# build-essential and python3 are required to compile better-sqlite3 native addon
 if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
     export LC_ALL=C
     echo "==> Installing system dependencies..."
     apt-get update -qq
-    apt-get install -y -qq curl unzip build-essential python3
+    apt-get install -y -qq curl unzip
+    NODE_MAJOR=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])" 2>/dev/null || echo "0")
+    if [ "$NODE_MAJOR" -lt 22 ]; then
+        echo "==> Installing Node.js 22..."
+        curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
+        apt-get install -y -qq nodejs
+    fi
 fi
 
-# Node / npm must already be installed (via nodesource or manually)
+# Node 22+ and npm are required
 for cmd in node npm curl unzip; do
     command -v "$cmd" >/dev/null 2>&1 || { echo "Error: $cmd is required but not installed."; exit 1; }
 done
+NODE_MAJOR=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])")
+if [ "$NODE_MAJOR" -lt 22 ]; then
+    echo "Error: Node.js 22 or higher is required (found $(node --version))."
+    exit 1
+fi
 
 # ── PocketBase ─────────────────────────────────────────────────────────────────
 if [ ! -f "$PB_DIR/pocketbase" ]; then
