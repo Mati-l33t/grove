@@ -146,10 +146,12 @@ systemctl restart grove.service
 sleep 2
 systemctl start grove-reminder.service
 
-echo ""
-echo "Grove installed successfully."
-echo "  App:    http://$(hostname -I | awk '{print $1}'):8090"
-echo "  Admin:  http://$(hostname -I | awk '{print $1}'):8090/_/"
-echo ""
-echo "  Log in to the app and register your first user account."
-echo "  Use the Admin panel to manage users and settings."
+if [ "$NONINTERACTIVE" != "1" ]; then
+    echo ""
+    echo "Grove installed successfully."
+    echo "  App:        http://$(hostname -I | awk '{print $1}'):8090"
+    echo "  PocketBase: http://$(hostname -I | awk '{print $1}'):8090/_/"
+    echo ""
+    echo "  Log in to the app and register your first user account."
+    echo "  Use the Admin panel to manage users and instance settings."
+fi
