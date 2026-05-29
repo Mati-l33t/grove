@@ -1,5 +1,26 @@
 /// <reference path="../pb_data/types.d.ts" />
 
+// Reject URLs that point at private/loopback addresses to prevent SSRF.
+function isUrlSafe(rawUrl) {
+    if (typeof rawUrl !== "string") return false
+    if (!/^https?:\/\//i.test(rawUrl)) return false
+    var m = rawUrl.match(/^https?:\/\/([^\/:\?#\[\]]+)/i)
+    if (!m) return false
+    var host = m[1].toLowerCase()
+    if (host === "localhost") return false
+    if (host.startsWith("::ffff:")) return false
+    if (host === "::1") return false
+    var p = host.split(".")
+    if (p.length === 4) {
+        var a = parseInt(p[0], 10), b = parseInt(p[1], 10)
+        if (a === 10 || a === 127 || a === 0) return false
+        if (a === 169 && b === 254) return false
+        if (a === 172 && b >= 16 && b <= 31) return false
+        if (a === 192 && b === 168) return false
+    }
+    return true
+}
+
 routerAdd("GET", "/api/grove/runtime", (c) => {
     const info = $apis.requestInfo(c)
     const authRecord = info.authRecord
@@ -67,6 +88,7 @@ routerAdd("POST", "/api/grove/test-email", (c) => {
 routerAdd("GET", "/api/grove/proxy-image", (c) => {
     var imgUrl = c.queryParam("url")
     if (!imgUrl) return c.json(400, { message: "url is required" })
+    if (!isUrlSafe(imgUrl)) return c.json(400, { message: "url not allowed" })
 
     var res
     try {
@@ -92,6 +114,7 @@ routerAdd("POST", "/api/grove/import-recipe", (c) => {
     if (!url || typeof url !== "string") {
         return c.json(400, { message: "url is required" })
     }
+    if (!isUrlSafe(url)) return c.json(400, { message: "url not allowed" })
 
     var res
     try {
@@ -838,9 +861,10 @@ routerAdd("POST", "/api/grove/chat", (c) => {
         if (!householdId || !names || names.length === 0) return []
         var ids = []
         for (var ni = 0; ni < names.length; ni++) {
+            var safeName = String(names[ni]).replace(/['"\\%]/g, "")
             var found = $app.dao().findRecordsByFilter(
                 "users",
-                'household = "' + householdId + '" && name ~ "' + names[ni] + '"',
+                'household = "' + householdId + '" && name ~ "' + safeName + '"',
                 "", 1, 0
             )
             if (found.length > 0) ids.push(found[0].id)
@@ -868,6 +892,32 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             base = '(user = "' + authRecord.id + '" || shared_with ~ "' + authRecord.id + '" || household = "' + householdId + '")'
         }
         return base + ' && start >= "' + startStr + '" && start <= "' + endStr + '"'
+    }
+
+    function userCanMutateList(listId) {
+        try {
+            var l = $app.dao().findRecordById("lists", listId)
+            if (l.getString("user") === authRecord.id) return true
+            if (householdId && l.getString("household") === householdId) return true
+            if (l.getString("assigned_to") === authRecord.id) return true
+            var sw = l.get("shared_with")
+            return Array.isArray(sw) && sw.indexOf(authRecord.id) >= 0
+        } catch (_) { return false }
+    }
+
+    function userCanMutateEvent(eventId) {
+        try {
+            var ev = $app.dao().findRecordById("events", eventId)
+            if (ev.getString("user") === authRecord.id) return true
+            if (householdId && ev.getString("household") === householdId) return true
+            var sw = ev.get("shared_with")
+            return Array.isArray(sw) && sw.indexOf(authRecord.id) >= 0
+        } catch (_) { return false }
+    }
+
+    function userCanMutateSchoolRecord(rec) {
+        if (rec.getString("user") === authRecord.id) return true
+        return !!(householdId && rec.getString("household") === householdId)
     }
 
     function executeTool(name, args) {
@@ -929,13 +979,16 @@ routerAdd("POST", "/api/grove/chat", (c) => {
 
             if (name === "check_list_item") {
                 var rec = $app.dao().findRecordById("list_items", args.item_id)
+                if (!userCanMutateList(rec.getString("list"))) return JSON.stringify({ error: "Access denied" })
                 rec.set("checked", args.checked)
                 $app.dao().saveRecord(rec)
                 return JSON.stringify({ id: rec.id, checked: rec.getBool("checked") })
             }
 
             if (name === "delete_list_item") {
-                $app.dao().deleteRecord($app.dao().findRecordById("list_items", args.item_id))
+                var rec = $app.dao().findRecordById("list_items", args.item_id)
+                if (!userCanMutateList(rec.getString("list"))) return JSON.stringify({ error: "Access denied" })
+                $app.dao().deleteRecord(rec)
                 return JSON.stringify({ deleted: args.item_id })
             }
 
@@ -979,6 +1032,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
 
             if (name === "update_event") {
                 var rec = $app.dao().findRecordById("events", args.event_id)
+                if (!userCanMutateEvent(args.event_id)) return JSON.stringify({ error: "Access denied" })
                 if (args.title !== undefined)       rec.set("title", args.title)
                 if (args.description !== undefined) rec.set("description", args.description)
                 if (args.location !== undefined)    rec.set("location", args.location)
@@ -992,11 +1046,13 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             }
 
             if (name === "delete_event") {
+                if (!userCanMutateEvent(args.event_id)) return JSON.stringify({ error: "Access denied" })
                 $app.dao().deleteRecord($app.dao().findRecordById("events", args.event_id))
                 return JSON.stringify({ deleted: args.event_id })
             }
 
             if (name === "update_list") {
+                if (!userCanMutateList(args.list_id)) return JSON.stringify({ error: "Access denied" })
                 var rec = $app.dao().findRecordById("lists", args.list_id)
                 if (args.name !== undefined) rec.set("name", args.name)
                 if (args.type !== undefined) rec.set("type", args.type)
@@ -1014,6 +1070,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             }
 
             if (name === "archive_list") {
+                if (!userCanMutateList(args.list_id)) return JSON.stringify({ error: "Access denied" })
                 var rec = $app.dao().findRecordById("lists", args.list_id)
                 rec.set("archived", true)
                 $app.dao().saveRecord(rec)
@@ -1021,6 +1078,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             }
 
             if (name === "delete_list") {
+                if (!userCanMutateList(args.list_id)) return JSON.stringify({ error: "Access denied" })
                 $app.dao().deleteRecord($app.dao().findRecordById("lists", args.list_id))
                 return JSON.stringify({ deleted: args.list_id })
             }
@@ -1098,7 +1156,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             if (name === "search_recipes") {
                 var base = '(user = "' + authRecord.id + '" || shared_with ~ "' + authRecord.id + '")'
                 if (householdId) base = '(' + base + ' || household = "' + householdId + '")'
-                var q = (args.query || "").replace(/"/g, "")
+                var q = (args.query || "").replace(/['"\\%]/g, "")
                 var filter = base + ' && (title ~ "' + q + '" || description ~ "' + q + '")'
                 var recipes = $app.dao().findRecordsByFilter("recipes", filter, "title", 20, 0)
                 return JSON.stringify(recipes.map(function(r) {
@@ -1172,6 +1230,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             }
 
             if (name === "add_recipe_from_url") {
+                if (!isUrlSafe(args.url || "")) return JSON.stringify({ error: "URL not allowed" })
                 var fetchRes
                 try {
                     fetchRes = $http.send({
@@ -1465,6 +1524,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
 
             if (name === "update_school_assignment") {
                 var uaRec = $app.dao().findRecordById("school_assignments", args.assignment_id)
+                if (!userCanMutateSchoolRecord(uaRec)) return JSON.stringify({ error: "Access denied" })
                 if (args.title !== undefined)    uaRec.set("title", args.title)
                 if (args.subject !== undefined)  uaRec.set("subject", args.subject)
                 if (args.type !== undefined)     uaRec.set("type", args.type)
@@ -1476,7 +1536,9 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             }
 
             if (name === "delete_school_assignment") {
-                $app.dao().deleteRecord($app.dao().findRecordById("school_assignments", args.assignment_id))
+                var daRec = $app.dao().findRecordById("school_assignments", args.assignment_id)
+                if (!userCanMutateSchoolRecord(daRec)) return JSON.stringify({ error: "Access denied" })
+                $app.dao().deleteRecord(daRec)
                 return JSON.stringify({ deleted: args.assignment_id })
             }
 
