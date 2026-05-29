@@ -89,12 +89,13 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
       setRecurring(event.recurring || 'none')
       setRecurringEnd(event.recurring_end ? event.recurring_end.slice(0, 10) : '')
       setReminderMinutes(event.reminder_minutes || 0)
+      const visibleSharedWith = (event.shared_with ?? []).filter(id => id !== user?.id)
       if (event.household) {
         setShareMode('household')
         setSharedWith([])
-      } else if (event.shared_with?.length) {
+      } else if (visibleSharedWith.length) {
         setShareMode('members')
-        setSharedWith(event.shared_with)
+        setSharedWith(visibleSharedWith)
       } else {
         setShareMode('private')
         setSharedWith([])
