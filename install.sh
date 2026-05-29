@@ -6,6 +6,8 @@ GROVE_DIR="$(cd "$(dirname "$0")" && pwd)"
 PB_VERSION="0.39.0"
 PB_DIR="$GROVE_DIR/pb"
 FRONTEND_DIR="$GROVE_DIR/frontend"
+NONINTERACTIVE=0
+[[ "${1:-}" == "--noninteractive" ]] && NONINTERACTIVE=1
 
 # ── Root check ─────────────────────────────────────────────────────────────────
 if [ "$(id -u)" -ne 0 ]; then
@@ -106,6 +108,36 @@ systemctl restart grove.service
 sleep 2
 systemctl start grove-reminder.service
 
+
+# ── PocketBase superuser ───────────────────────────────────────────────────────
+if [ "$NONINTERACTIVE" = "1" ]; then
+    PB_ADMIN_EMAIL="${GROVE_PB_ADMIN_EMAIL:-}"
+    PB_ADMIN_PASS="${GROVE_PB_ADMIN_PASS:-}"
+else
+    echo ""
+    echo "==> Create your PocketBase admin account"
+    echo "    This is used to manage users and settings at :8090/_/"
+    echo ""
+    while true; do
+        read -rp "  Admin email:    " PB_ADMIN_EMAIL
+        [ -n "$PB_ADMIN_EMAIL" ] && break
+        echo "  Email cannot be empty."
+    done
+    while true; do
+        read -rsp "  Admin password: " PB_ADMIN_PASS
+        echo ""
+        [ ${#PB_ADMIN_PASS} -ge 10 ] && break
+        echo "  Password must be at least 10 characters."
+    done
+fi
+
+"$PB_DIR/pocketbase" superuser upsert "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASS" \
+    --dir="$PB_DIR" >/dev/null
+
 echo ""
 echo "Grove installed successfully."
-echo "Open PocketBase admin at :8090/_/ to complete first-time setup."
+echo "  App:    http://$(hostname -I | awk '{print $1}'):8090"
+echo "  Admin:  http://$(hostname -I | awk '{print $1}'):8090/_/"
+echo ""
+echo "  Log in to the app and register your first user account."
+echo "  Use the Admin panel to manage users and settings."

@@ -342,8 +342,27 @@ run_install() {
   pct exec "$CTID" -- git clone https://github.com/Mati-l33t/grove.git /opt/grove
   msg_ok "Repository cloned"
 
+  echo ""
+  echo -e "${TAB}${BOLD}🔐 Create your PocketBase admin account${CL}"
+  while true; do
+    PB_ADMIN_EMAIL=$(whiptail --backtitle "Grove Installer" --title "ADMIN EMAIL" \
+      --inputbox "\nAdmin email address for PocketBase:" 10 58 "" 3>&1 1>&2 2>&3) || exit
+    [ -n "$PB_ADMIN_EMAIL" ] && break
+    whiptail --backtitle "Grove Installer" --title "ERROR" --msgbox "\nEmail cannot be empty." 8 40
+  done
+  while true; do
+    PB_ADMIN_PASS=$(whiptail --backtitle "Grove Installer" --title "ADMIN PASSWORD" \
+      --passwordbox "\nAdmin password (min 10 characters):" 10 58 "" 3>&1 1>&2 2>&3) || exit
+    [ ${#PB_ADMIN_PASS} -ge 10 ] && break
+    whiptail --backtitle "Grove Installer" --title "ERROR" --msgbox "\nPassword must be at least 10 characters." 8 50
+  done
+
   msg_info "Running Grove installer"
-  pct exec "$CTID" -- bash /opt/grove/install.sh
+  pct exec "$CTID" -- bash -c "
+    GROVE_PB_ADMIN_EMAIL='${PB_ADMIN_EMAIL}' \
+    GROVE_PB_ADMIN_PASS='${PB_ADMIN_PASS}' \
+    bash /opt/grove/install.sh --noninteractive
+  "
   msg_ok "Grove installed"
 }
 
