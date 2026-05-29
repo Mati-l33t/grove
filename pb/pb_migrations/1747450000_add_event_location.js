@@ -1,17 +1,13 @@
 /// <reference path="../pb_data/types.d.ts" />
-migrate((db) => {
-    const dao = new Dao(db)
-    const col = dao.findCollectionByNameOrId("events")
-    col.schema.addField(new SchemaField({
-        name: "location",
-        type: "text",
-    }))
-    dao.saveCollection(col)
-}, (db) => {
-    const dao = new Dao(db)
+migrate((app) => {
+    const col = app.findCollectionByNameOrId("events")
+    col.fields.add({ name: "location", type: "text" })
+    app.save(col)
+}, (app) => {
     try {
-        const col = dao.findCollectionByNameOrId("events")
-        col.schema.removeField(col.schema.getFieldByName("location").id)
-        dao.saveCollection(col)
+        const col = app.findCollectionByNameOrId("events")
+        const f = col.fields.getByName("location")
+        if (f) col.fields.remove(f)
+        app.save(col)
     } catch (_) {}
 })

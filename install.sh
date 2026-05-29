@@ -3,7 +3,7 @@ set -euo pipefail
 exec 2>&1
 
 GROVE_DIR="$(cd "$(dirname "$0")" && pwd)"
-PB_VERSION="0.22.27"
+PB_VERSION="0.39.0"
 PB_DIR="$GROVE_DIR/pb"
 FRONTEND_DIR="$GROVE_DIR/frontend"
 

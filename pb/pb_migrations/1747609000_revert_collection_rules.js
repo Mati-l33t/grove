@@ -1,49 +1,49 @@
 /// <reference path="../pb_data/types.d.ts" />
-migrate((db) => {
-    const dao = new Dao(db)
+migrate((app) => {
+    
     const open = "@request.auth.id != ''"
 
     {
-        const col = dao.findCollectionByNameOrId("events")
+        const col = app.findCollectionByNameOrId("events")
         col.listRule   = open
         col.viewRule   = open
         col.updateRule = open
-        dao.saveCollection(col)
+        app.save(col)
     }
     {
-        const col = dao.findCollectionByNameOrId("lists")
+        const col = app.findCollectionByNameOrId("lists")
         col.listRule = open
         col.viewRule = open
-        dao.saveCollection(col)
+        app.save(col)
     }
     {
-        const col = dao.findCollectionByNameOrId("list_items")
+        const col = app.findCollectionByNameOrId("list_items")
         col.listRule   = open
         col.viewRule   = open
         col.updateRule = open
         col.deleteRule = open
-        dao.saveCollection(col)
+        app.save(col)
     }
     {
-        const col = dao.findCollectionByNameOrId("recipes")
+        const col = app.findCollectionByNameOrId("recipes")
         col.listRule = open
         col.viewRule = open
-        dao.saveCollection(col)
+        app.save(col)
     }
     {
-        const col = dao.findCollectionByNameOrId("meal_plans")
+        const col = app.findCollectionByNameOrId("meal_plans")
         col.listRule = open
         col.viewRule = open
-        dao.saveCollection(col)
+        app.save(col)
     }
     for (const name of ["school_children", "school_schedule", "school_lunches", "school_assignments"]) {
         try {
-            const col = dao.findCollectionByNameOrId(name)
+            const col = app.findCollectionByNameOrId(name)
             col.listRule   = open
             col.viewRule   = open
             col.updateRule = open
             col.deleteRule = open
-            dao.saveCollection(col)
+            app.save(col)
         } catch (_) {}
     }
 }, (db) => {})

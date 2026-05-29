@@ -10,7 +10,7 @@ RUN npm run build
 # ── Stage 2: Grove runtime ────────────────────────────────────────────────────
 FROM node:22-alpine
 
-ARG PB_VERSION=0.22.27
+ARG PB_VERSION=0.39.0
 ARG TARGETARCH
 
 RUN apk add --no-cache ca-certificates curl unzip

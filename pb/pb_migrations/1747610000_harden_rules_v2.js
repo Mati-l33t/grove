@@ -7,8 +7,8 @@
 // list_items is intentionally left untouched — shared_with users (non-household)
 // need to check items off, and ?= on a nested relation is unsupported.
 
-migrate((db) => {
-    const dao = new Dao(db)
+migrate((app) => {
+    
 
     const sharedRule = (extra) =>
         '@request.auth.id = user' +
@@ -24,70 +24,70 @@ migrate((db) => {
 
     // Events — tighten list/view; fix updateRule (was open to any user since 1747503000)
     {
-        const col = dao.findCollectionByNameOrId('events')
+        const col = app.findCollectionByNameOrId('events')
         col.listRule   = sharedRule()
         col.viewRule   = sharedRule()
         col.updateRule = sharedRule()
-        dao.saveCollection(col)
+        app.save(col)
     }
 
     // Lists — tighten list/view (include assigned_to)
     {
-        const col = dao.findCollectionByNameOrId('lists')
+        const col = app.findCollectionByNameOrId('lists')
         col.listRule = sharedRule('@request.auth.id = assigned_to')
         col.viewRule = sharedRule('@request.auth.id = assigned_to')
-        dao.saveCollection(col)
+        app.save(col)
     }
 
     // Recipes — tighten list/view
     {
-        const col = dao.findCollectionByNameOrId('recipes')
+        const col = app.findCollectionByNameOrId('recipes')
         col.listRule = sharedRule()
         col.viewRule = sharedRule()
-        dao.saveCollection(col)
+        app.save(col)
     }
 
     // Meal plans — tighten list/view
     {
-        const col = dao.findCollectionByNameOrId('meal_plans')
+        const col = app.findCollectionByNameOrId('meal_plans')
         col.listRule = ownedRule()
         col.viewRule = ownedRule()
-        dao.saveCollection(col)
+        app.save(col)
     }
 
     // School collections — tighten list/view; fix update/delete (open since 1747602000)
     for (const name of ['school_children', 'school_schedule', 'school_lunches', 'school_assignments']) {
         try {
-            const col = dao.findCollectionByNameOrId(name)
+            const col = app.findCollectionByNameOrId(name)
             col.listRule   = ownedRule()
             col.viewRule   = ownedRule()
             col.updateRule = ownedRule()
             col.deleteRule = ownedRule()
-            dao.saveCollection(col)
+            app.save(col)
         } catch (_) {}
     }
 }, (db) => {
-    const dao = new Dao(db)
+    
     const open = "@request.auth.id != ''"
 
     for (const name of ['events', 'lists', 'recipes', 'meal_plans']) {
         try {
-            const col = dao.findCollectionByNameOrId(name)
+            const col = app.findCollectionByNameOrId(name)
             col.listRule = open
             col.viewRule = open
             if (name === 'events') col.updateRule = open
-            dao.saveCollection(col)
+            app.save(col)
         } catch (_) {}
     }
 
     for (const name of ['school_children', 'school_schedule', 'school_lunches', 'school_assignments']) {
         try {
-            const col = dao.findCollectionByNameOrId(name)
+            const col = app.findCollectionByNameOrId(name)
             col.listRule   = open
             col.viewRule   = open
             col.updateRule = open
             col.deleteRule = open
-            dao.saveCollection(col)
+            app.save(col)
         } catch (_) {}
     }
 })

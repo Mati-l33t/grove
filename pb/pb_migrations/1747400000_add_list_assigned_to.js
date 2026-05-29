@@ -1,24 +1,13 @@
 /// <reference path="../pb_data/types.d.ts" />
-migrate((db) => {
-    const dao = new Dao(db)
-    const col = dao.findCollectionByNameOrId('lists')
-    col.schema.addField(new SchemaField({
-        name: 'assigned_to',
-        type: 'relation',
-        options: {
-            collectionId: '_pb_users_auth_',
-            cascadeDelete: false,
-            minSelect: null,
-            maxSelect: 1,
-            displayFields: [],
-        },
-    }))
-    dao.saveCollection(col)
-}, (db) => {
-    const dao = new Dao(db)
+migrate((app) => {
+    const col = app.findCollectionByNameOrId("lists")
+    col.fields.add({ name: "assigned_to", type: "relation", collectionId: "_pb_users_auth_", cascadeDelete: false, maxSelect: 1 })
+    app.save(col)
+}, (app) => {
     try {
-        const col = dao.findCollectionByNameOrId('lists')
-        col.schema.removeField(col.schema.getFieldByName('assigned_to').id)
-        dao.saveCollection(col)
+        const col = app.findCollectionByNameOrId("lists")
+        const f = col.fields.getByName("assigned_to")
+        if (f) col.fields.remove(f)
+        app.save(col)
     } catch (_) {}
 })

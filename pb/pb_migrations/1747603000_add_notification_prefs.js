@@ -1,18 +1,13 @@
 /// <reference path="../pb_data/types.d.ts" />
-migrate((db) => {
-    const dao = new Dao(db)
-    const usersCol = dao.findCollectionByNameOrId("users")
-    usersCol.schema.addField(new SchemaField({
-        name: "notification_prefs",
-        type: "json",
-        options: { maxSize: 4096 },
-    }))
-    dao.saveCollection(usersCol)
-}, (db) => {
-    const dao = new Dao(db)
+migrate((app) => {
+    const col = app.findCollectionByNameOrId("users")
+    col.fields.add({ name: "notification_prefs", type: "json", maxSize: 4096 })
+    app.save(col)
+}, (app) => {
     try {
-        const usersCol = dao.findCollectionByNameOrId("users")
-        usersCol.schema.removeField(usersCol.schema.getFieldByName("notification_prefs").id)
-        dao.saveCollection(usersCol)
+        const col = app.findCollectionByNameOrId("users")
+        const f = col.fields.getByName("notification_prefs")
+        if (f) col.fields.remove(f)
+        app.save(col)
     } catch (_) {}
 })

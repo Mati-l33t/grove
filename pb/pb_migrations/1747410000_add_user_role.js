@@ -1,21 +1,15 @@
 /// <reference path="../pb_data/types.d.ts" />
-migrate((db) => {
-    const dao = new Dao(db)
-    const usersCol = dao.findCollectionByNameOrId("users")
-    usersCol.schema.addField(new SchemaField({
-        name: "role",
-        type: "select",
-        options: { maxSelect: 1, values: ["adult", "child"] },
-    }))
-    // Allow admins to manage other users (needed for role assignment)
-    usersCol.updateRule = "@request.auth.id = id || @request.auth.record.is_admin = true"
-    dao.saveCollection(usersCol)
-}, (db) => {
-    const dao = new Dao(db)
+migrate((app) => {
+    const col = app.findCollectionByNameOrId("users")
+    col.fields.add({ name: "role", type: "select", maxSelect: 1, values: ["adult", "child"] })
+    col.updateRule = "@request.auth.id = id || @request.auth.is_admin = true"
+    app.save(col)
+}, (app) => {
     try {
-        const usersCol = dao.findCollectionByNameOrId("users")
-        usersCol.schema.removeField(usersCol.schema.getFieldByName("role").id)
-        usersCol.updateRule = "id = @request.auth.id"
-        dao.saveCollection(usersCol)
+        const col = app.findCollectionByNameOrId("users")
+        const f = col.fields.getByName("role")
+        if (f) col.fields.remove(f)
+        col.updateRule = "id = @request.auth.id"
+        app.save(col)
     } catch (_) {}
 })

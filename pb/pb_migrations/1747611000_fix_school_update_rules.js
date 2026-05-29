@@ -4,8 +4,8 @@
 // Household members can list/view (to see schedules), but only the owner
 // or an admin may update/delete. The household rule on write was too broad.
 
-migrate((db) => {
-    const dao = new Dao(db)
+migrate((app) => {
+    
 
     const viewRule =
         '@request.auth.id = user' +
@@ -18,16 +18,16 @@ migrate((db) => {
 
     for (const name of ['school_children', 'school_schedule', 'school_lunches', 'school_assignments']) {
         try {
-            const col = dao.findCollectionByNameOrId(name)
+            const col = app.findCollectionByNameOrId(name)
             col.listRule   = viewRule
             col.viewRule   = viewRule
             col.updateRule = writeRule
             col.deleteRule = writeRule
-            dao.saveCollection(col)
+            app.save(col)
         } catch (_) {}
     }
 }, (db) => {
-    const dao = new Dao(db)
+    
 
     const ownedRule =
         '@request.auth.id = user' +
@@ -36,12 +36,12 @@ migrate((db) => {
 
     for (const name of ['school_children', 'school_schedule', 'school_lunches', 'school_assignments']) {
         try {
-            const col = dao.findCollectionByNameOrId(name)
+            const col = app.findCollectionByNameOrId(name)
             col.listRule   = ownedRule
             col.viewRule   = ownedRule
             col.updateRule = ownedRule
             col.deleteRule = ownedRule
-            dao.saveCollection(col)
+            app.save(col)
         } catch (_) {}
     }
 })
