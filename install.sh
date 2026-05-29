@@ -138,8 +138,16 @@ else
     while true; do
         read -rsp "  Admin password: " PB_ADMIN_PASS
         echo ""
-        [ ${#PB_ADMIN_PASS} -ge 10 ] && break
-        echo "  Password must be at least 10 characters."
+        if [ ${#PB_ADMIN_PASS} -lt 10 ]; then
+            echo "  Password must be at least 10 characters."
+            continue
+        fi
+        read -rsp "  Confirm password: " PB_ADMIN_PASS2
+        echo ""
+        if [ "$PB_ADMIN_PASS" = "$PB_ADMIN_PASS2" ]; then
+            break
+        fi
+        echo "  Passwords do not match, try again."
     done
 fi
 
