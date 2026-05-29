@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
     const col = app.findCollectionByNameOrId("events")
-    col.fields.add({ name: "location", type: "text" })
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "location", type: "text" }))
     app.save(col)
 }, (app) => {
     try {

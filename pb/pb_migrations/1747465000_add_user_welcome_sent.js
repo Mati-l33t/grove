@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
     const col = app.findCollectionByNameOrId("users")
-    col.fields.add({ name: "welcome_sent", type: "bool" })
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "welcome_sent", type: "bool" }))
     app.save(col)
 }, (app) => {
     try {

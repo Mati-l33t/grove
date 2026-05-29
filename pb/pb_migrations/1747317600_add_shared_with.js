@@ -2,7 +2,7 @@
 migrate((app) => {
     for (const colName of ["events", "lists", "recipes", "meal_plans"]) {
         const col = app.findCollectionByNameOrId(colName)
-        col.fields.add({ name: "shared_with", type: "relation", collectionId: "_pb_users_auth_", cascadeDelete: false, maxSelect: null })
+        col.fields.addMarshaledJSON(JSON.stringify({ name: "shared_with", type: "relation", collectionId: "_pb_users_auth_", cascadeDelete: false, maxSelect: null }))
         app.save(col)
     }
 }, (app) => {

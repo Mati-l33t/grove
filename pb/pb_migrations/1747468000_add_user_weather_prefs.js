@@ -1,8 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
     const col = app.findCollectionByNameOrId("users")
-    col.fields.add({ name: "show_weather", type: "bool" })
-    col.fields.add({ name: "weather_unit", type: "select", maxSelect: 1, values: ["celsius", "fahrenheit"] })
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "show_weather", type: "bool" }))
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "weather_unit", type: "select", maxSelect: 1, values: ["celsius", "fahrenheit"] }))
     app.save(col)
 }, (app) => {
     try {

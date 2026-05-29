@@ -1,16 +1,18 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-    
     const col = app.findCollectionByNameOrId('users')
-    const opts = col.authOptions()
-    opts.allowUsernameAuth = true
-    opts.requireEmail = false
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "username", type: "text" }))
+    const existing = Array.from(col.indexes || [])
+    if (!existing.some((s) => String(s).indexOf("username") !== -1)) {
+        existing.push("CREATE UNIQUE INDEX __pb_users_auth__username_idx ON users (username)")
+        col.indexes = existing
+    }
+    col.passwordAuth.identityFields = ["email", "username"]
     app.save(col)
-}, (db) => {
-    
+}, (app) => {
     const col = app.findCollectionByNameOrId('users')
-    const opts = col.authOptions()
-    opts.allowUsernameAuth = false
-    opts.requireEmail = true
+    col.passwordAuth.identityFields = ["email"]
+    const f = col.fields.getByName("username")
+    if (f) col.fields.removeById(f.id)
     app.save(col)
 })

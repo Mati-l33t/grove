@@ -1,7 +1,7 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
     const col = app.findCollectionByNameOrId("users")
-    col.fields.add({ name: "notification_prefs", type: "json", maxSize: 4096 })
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "notification_prefs", type: "json", maxSize: 4096 }))
     app.save(col)
 }, (app) => {
     try {

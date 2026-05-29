@@ -8,10 +8,10 @@ migrate((app) => {
         updateRule: "@request.auth.id = user",
         deleteRule: "@request.auth.id = user",
     })
-    col.fields.add({ name: "user",     type: "relation", required: true, collectionId: "_pb_users_auth_", cascadeDelete: true, maxSelect: 1 })
-    col.fields.add({ name: "endpoint", type: "text",     required: true })
-    col.fields.add({ name: "p256dh",   type: "text",     required: true })
-    col.fields.add({ name: "auth",     type: "text",     required: true })
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "user",     type: "relation", required: true, collectionId: "_pb_users_auth_", cascadeDelete: true, maxSelect: 1 }))
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "endpoint", type: "text",     required: true }))
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "p256dh",   type: "text",     required: true }))
+    col.fields.addMarshaledJSON(JSON.stringify({ name: "auth",     type: "text",     required: true }))
     app.save(col)
 }, (app) => {
     try { app.delete(app.findCollectionByNameOrId("push_subscriptions")) } catch (_) {}
