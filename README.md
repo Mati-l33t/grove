@@ -32,7 +32,7 @@ Run this on your **Proxmox host** as root:
 bash <(curl -fsSL https://raw.githubusercontent.com/Mati-l33t/grove/main/proxmox/install.sh)
 ```
 
-Creates a Debian 12 or 13 LXC (2 cores, 1 GB RAM, 8 GB disk) and installs Grove automatically.  
+Creates a Debian 12 or 13 LXC (2 cores, 1 GB RAM, 4 GB disk) and installs Grove automatically.  
 Grove will be available at `http://<container-ip>:8090`.
 
 The installer prompts you to choose between default settings or advanced options (container ID, hostname, disk size, CPU, RAM, bridge, static IP, VLAN).
