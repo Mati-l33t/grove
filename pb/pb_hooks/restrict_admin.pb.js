@@ -1,38 +1,46 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-function isPrivateIP(ip) {
-    if (!ip) return false
-
-    // Strip IPv6-mapped IPv4 prefix (e.g. ::ffff:192.168.1.1)
-    ip = ip.replace(/^::ffff:/i, "")
-
-    if (ip === "::1") return true                          // IPv6 loopback
-    if (/^fe[89ab][0-9a-f]/i.test(ip)) return true        // IPv6 link-local fe80::/10
-    if (/^f[cd][0-9a-f]{2}/i.test(ip)) return true        // IPv6 unique-local fc00::/7
-
-    const octets = ip.split(".")
-    if (octets.length !== 4) return false
-
-    const a = parseInt(octets[0], 10)
-    const b = parseInt(octets[1], 10)
-
-    if (a === 127) return true                        // 127.0.0.0/8  loopback
-    if (a === 10)  return true                        // 10.0.0.0/8   private
-    if (a === 192 && b === 168) return true           // 192.168.0.0/16 private
-    if (a === 172 && b >= 16 && b <= 31) return true  // 172.16.0.0/12  private
-
-    return false
-}
-
 routerUse((next) => {
     return (c) => {
-        const path = c.request().url.path
+        let routePath = "?"
+        let urlPath = "?"
+        try { routePath = String(c.path()) }                 catch(e) { routePath = "err" }
+        try { urlPath = String(c.request().url.path || "") } catch(e) { urlPath = "err" }
 
-        if (path === "/_/" || path.startsWith("/_/")) {
-            const ip = c.realIP()
+        const isAdmin = routePath.indexOf("/_/") === 0 || urlPath.indexOf("/_/") === 0
 
-            if (!isPrivateIP(ip)) {
-                return c.string(403, "Admin panel access is restricted to the local network.")
+        if (isAdmin) {
+            let raddr = ""
+            let xri   = ""
+            let xff   = ""
+            try { raddr = String(c.request().remoteAddr || "") }                     catch(e) { raddr = "" }
+            try { xri   = String(c.request().header.get("X-Real-Ip") || "") }       catch(e) { xri = "" }
+            try { xff   = String(c.request().header.get("X-Forwarded-For") || "") } catch(e) { xff = "" }
+
+            let ip = ""
+            if (xri) ip = xri.split(",")[0].trim()
+            if (!ip && xff) ip = xff.split(",")[0].trim()
+            if (!ip) {
+                const ci = raddr.lastIndexOf(":")
+                ip = ci !== -1 ? raddr.substring(0, ci) : raddr
+            }
+
+            // Inline private-IP check — no external function call
+            let priv = (ip === "::1")
+            if (!priv && ip.substring(0, 7).toLowerCase() === "::ffff:") ip = ip.substring(7)
+            if (!priv) {
+                const p = ip.split(".")
+                if (p.length === 4) {
+                    const a = Number(p[0])
+                    const b = Number(p[1])
+                    priv = (a === 10 || a === 127 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31))
+                }
+            }
+
+            console.log("[grove-admin] ADMIN ip=" + ip + " private=" + priv)
+
+            if (!priv) {
+                return c.json(403, { code: 403, message: "Admin panel access is restricted to the local network." })
             }
         }
 
