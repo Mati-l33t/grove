@@ -57,8 +57,8 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({ user: state.user, household: state.household }),
       onRehydrateStorage: () => (state) => {
         if (!state) return
-        if (pb.authStore.isValid && pb.authStore.model) {
-          const u = pb.authStore.model as unknown as User
+        if (pb.authStore.isValid && pb.authStore.record) {
+          const u = pb.authStore.record as unknown as User
           state.user = u
           state.isAuthenticated = true
           state.permissions = resolvePermissions(u)
