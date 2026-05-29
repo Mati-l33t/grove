@@ -56,7 +56,7 @@ npm run build
 # ── Reminder service dependencies ─────────────────────────────────────────────
 echo "==> Installing reminder service dependencies..."
 cd "$GROVE_DIR"
-npm install --silent
+npm install
 
 # ── Copy frontend build ────────────────────────────────────────────────────────
 mkdir -p "$PB_DIR/pb_public"
