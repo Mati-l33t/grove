@@ -76,14 +76,18 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
       setTitle(event.title)
       setDescription(event.description || '')
       setLocation(event.location || '')
-      setStartDate(pbToLocalDate(event.start))
+      setStartDate(event.all_day ? event.start.slice(0, 10) : pbToLocalDate(event.start))
       setStartTime(event.all_day ? '09:00' : pbToLocalTime(event.start))
-      setEndDate(event.end ? pbToLocalDate(event.end) : pbToLocalDate(event.start))
+      setEndDate(
+        event.all_day
+          ? (event.end ? event.end.slice(0, 10) : event.start.slice(0, 10))
+          : (event.end ? pbToLocalDate(event.end) : pbToLocalDate(event.start))
+      )
       setEndTime(event.end && !event.all_day ? pbToLocalTime(event.end) : '10:00')
       setAllDay(event.all_day)
       setColor(event.color || user?.color || '#22c55e')
       setRecurring(event.recurring || 'none')
-      setRecurringEnd(event.recurring_end ? pbToLocalDate(event.recurring_end) : '')
+      setRecurringEnd(event.recurring_end ? event.recurring_end.slice(0, 10) : '')
       setReminderMinutes(event.reminder_minutes || 0)
       if (event.household) {
         setShareMode('household')
