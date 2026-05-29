@@ -17,7 +17,7 @@ migrate((app) => {
     const names = [
         "households", "events", "lists", "list_items", "recipes", "meal_plans",
         "instance_settings", "push_subscriptions", "ai_settings", "smtp_settings",
-        "grove_notification_sent", "school_children", "school_schedule",
+        "school_children", "school_schedule",
         "school_lunches", "school_assignments",
     ]
 

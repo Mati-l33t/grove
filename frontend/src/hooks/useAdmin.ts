@@ -38,9 +38,8 @@ export function useAdminUsers(page: number, search: string) {
   return useQuery({
     queryKey: ['admin', 'users', page, search],
     queryFn: async () => {
-      const filter = search.trim()
-        ? `name ~ "${search}" || email ~ "${search}"`
-        : ''
+      const safe = search.trim().replace(/"/g, '')
+      const filter = safe ? `name ~ "${safe}" || email ~ "${safe}"` : ''
       const result = await pb.collection('users').getList(page, 20, {
         filter,
         expand: 'household',
