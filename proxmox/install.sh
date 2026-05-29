@@ -353,8 +353,14 @@ run_install() {
   while true; do
     PB_ADMIN_PASS=$(whiptail --backtitle "Grove Installer" --title "ADMIN PASSWORD" \
       --passwordbox "\nAdmin password (min 10 characters):" 10 58 "" 3>&1 1>&2 2>&3) || exit
-    [ ${#PB_ADMIN_PASS} -ge 10 ] && break
-    whiptail --backtitle "Grove Installer" --title "ERROR" --msgbox "\nPassword must be at least 10 characters." 8 50
+    if [ ${#PB_ADMIN_PASS} -lt 10 ]; then
+      whiptail --backtitle "Grove Installer" --title "ERROR" --msgbox "\nPassword must be at least 10 characters." 8 50
+      continue
+    fi
+    PB_ADMIN_PASS2=$(whiptail --backtitle "Grove Installer" --title "CONFIRM PASSWORD" \
+      --passwordbox "\nConfirm admin password:" 10 58 "" 3>&1 1>&2 2>&3) || exit
+    [ "$PB_ADMIN_PASS" = "$PB_ADMIN_PASS2" ] && break
+    whiptail --backtitle "Grove Installer" --title "ERROR" --msgbox "\nPasswords do not match, try again." 8 50
   done
 
   msg_info "Running Grove installer"
