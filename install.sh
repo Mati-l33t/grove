@@ -128,7 +128,7 @@ fi
 # so there is no race between the CLI writer and the running server.
 echo "==> Initialising database..."
 "$PB_DIR/pocketbase" superuser upsert "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASS" \
-    --dir="$PB_DIR"
+    --dir="$PB_DIR/pb_data"
 
 # Hand ownership of everything the service will write to over to the grove user
 chown -R grove:grove "$PB_DIR/pb_data"
