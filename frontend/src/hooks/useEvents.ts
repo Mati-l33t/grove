@@ -165,15 +165,13 @@ export function useCreateCalendarEvent() {
   return useMutation({
     mutationFn: async (data: EventData) => {
       const { shareMode, sharedWith, assignedUserId, ...rest } = data
-      const actualUser = assignedUserId || user!.id
-      const sharing = sharingFields(shareMode, sharedWith, household?.id)
-      if (actualUser !== user!.id && !sharing.household && !sharing.shared_with.includes(user!.id)) {
-        sharing.shared_with = [...sharing.shared_with, user!.id]
-      }
+      // Private visibility: creator always owns the record so only they can see it.
+      // Non-private: assign ownership to the selected member.
+      const actualUser = shareMode === 'private' ? user!.id : (assignedUserId || user!.id)
       return pb.collection('events').create({
         ...rest,
         user: actualUser,
-        ...sharing,
+        ...sharingFields(shareMode, sharedWith, household?.id),
       })
     },
     onSuccess: () => {
@@ -188,14 +186,11 @@ export function useUpdateEvent() {
 
   return useMutation({
     mutationFn: async ({ id, shareMode, sharedWith, assignedUserId, ...data }: EventData & { id: string }) => {
-      const sharing = sharingFields(shareMode, sharedWith, household?.id)
-      if (assignedUserId && assignedUserId !== user!.id && !sharing.household && !sharing.shared_with.includes(user!.id)) {
-        sharing.shared_with = [...sharing.shared_with, user!.id]
-      }
+      const effectiveUser = shareMode === 'private' ? user!.id : assignedUserId
       return pb.collection('events').update(id, {
         ...data,
-        ...(assignedUserId ? { user: assignedUserId } : {}),
-        ...sharing,
+        ...(effectiveUser ? { user: effectiveUser } : {}),
+        ...sharingFields(shareMode, sharedWith, household?.id),
       })
     },
     onSuccess: () => {
