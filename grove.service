@@ -5,6 +5,8 @@ StartLimitIntervalSec=0
 
 [Service]
 Type=simple
+User=grove
+Group=grove
 WorkingDirectory=/opt/grove/pb
 ExecStart=/opt/grove/pb/pocketbase serve --http=0.0.0.0:8090
 Restart=always

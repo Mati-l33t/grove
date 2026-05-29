@@ -7,6 +7,10 @@ services:
       - "8090:8090"
     volumes:
       - grove_data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 
 volumes:
   grove_data:

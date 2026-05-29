@@ -246,7 +246,6 @@ build_container() {
     --rootfs      "${CONTAINER_STORAGE}:${DISK_SIZE}" \
     --net0        "name=eth0,bridge=${BRG},ip=${NET}${GATE}${VLAN_TAG}" \
     --nameserver  "$ns" \
-    --features    "nesting=1" \
     --unprivileged "$UNPRIVILEGED" \
     --onboot      1 \
     --timezone    "$tz"
@@ -332,7 +331,7 @@ run_install() {
     export DEBIAN_FRONTEND=noninteractive
     export LC_ALL=C
     apt-get update -qq
-    apt-get install -y -qq git curl unzip build-essential python3
+    apt-get install -y -qq git curl unzip
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
     apt-get install -y -qq nodejs
   "

@@ -5,6 +5,8 @@ Requires=grove.service
 
 [Service]
 Type=simple
+User=grove
+Group=grove
 WorkingDirectory=/opt/grove
 ExecStart=/usr/bin/node /opt/grove/reminder.js
 Restart=always

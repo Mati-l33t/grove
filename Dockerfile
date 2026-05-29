@@ -16,11 +16,18 @@ ARG TARGETARCH
 RUN apk add --no-cache ca-certificates curl unzip
 
 RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") \
+    && PB_FILE="pocketbase_${PB_VERSION}_linux_${ARCH}.zip" \
     && curl -fsSL \
-       "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_${ARCH}.zip" \
+       "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/${PB_FILE}" \
        -o /tmp/pb.zip \
+    && curl -fsSL \
+       "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/checksums.txt" \
+       -o /tmp/pb.checksums \
+    && EXPECTED=$(grep "${PB_FILE}" /tmp/pb.checksums | awk '{print $1}') \
+    && ACTUAL=$(sha256sum /tmp/pb.zip | awk '{print $1}') \
+    && [ -n "$EXPECTED" ] && [ "$EXPECTED" = "$ACTUAL" ] || { echo "PocketBase checksum mismatch"; exit 1; } \
     && unzip -q /tmp/pb.zip pocketbase -d /app/ \
-    && rm /tmp/pb.zip \
+    && rm /tmp/pb.zip /tmp/pb.checksums \
     && chmod +x /app/pocketbase
 
 COPY package.json  /app/package.json

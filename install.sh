@@ -50,8 +50,19 @@ if [ ! -f "$PB_DIR/pocketbase" ]; then
         *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
     esac
     mkdir -p "$PB_DIR"
-    curl -fsSL "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_${PB_ARCH}.zip" \
+    PB_FILE="pocketbase_${PB_VERSION}_linux_${PB_ARCH}.zip"
+    curl -fsSL "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/${PB_FILE}" \
         -o /tmp/pb.zip
+    curl -fsSL "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/checksums.txt" \
+        -o /tmp/pb.checksums
+    EXPECTED=$(grep "${PB_FILE}" /tmp/pb.checksums | awk '{print $1}')
+    ACTUAL=$(sha256sum /tmp/pb.zip | awk '{print $1}')
+    if [ -z "$EXPECTED" ] || [ "$EXPECTED" != "$ACTUAL" ]; then
+        echo "Error: PocketBase checksum verification failed — aborting"
+        rm -f /tmp/pb.zip /tmp/pb.checksums
+        exit 1
+    fi
+    rm -f /tmp/pb.checksums
     unzip -q /tmp/pb.zip pocketbase -d "$PB_DIR"
     chmod +x "$PB_DIR/pocketbase"
     rm /tmp/pb.zip
@@ -75,6 +86,14 @@ cp -r "$FRONTEND_DIR/dist/"* "$PB_DIR/pb_public/"
 # ── VAPID keys ─────────────────────────────────────────────────────────────────
 echo "==> Setting up push notifications..."
 node "$GROVE_DIR/reminder.js" --setup
+
+# ── Service user ───────────────────────────────────────────────────────────────
+echo "==> Creating service user..."
+id -u grove &>/dev/null || useradd -r -s /sbin/nologin grove
+mkdir -p "$PB_DIR/pb_data"
+chown -R grove:grove "$PB_DIR/pb_data"
+chown grove:grove "$GROVE_DIR/vapid-keys.json"
+chmod 600 "$GROVE_DIR/vapid-keys.json"
 
 # ── Systemd services ───────────────────────────────────────────────────────────
 echo "==> Setting up systemd services..."
