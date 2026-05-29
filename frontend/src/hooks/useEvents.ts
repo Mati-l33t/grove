@@ -165,8 +165,6 @@ export function useCreateCalendarEvent() {
   return useMutation({
     mutationFn: async (data: EventData) => {
       const { shareMode, sharedWith, assignedUserId, ...rest } = data
-      // Private visibility: creator always owns the record so only they can see it.
-      // Non-private: assign ownership to the selected member.
       const actualUser = shareMode === 'private' ? user!.id : (assignedUserId || user!.id)
       return pb.collection('events').create({
         ...rest,
