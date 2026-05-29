@@ -22,7 +22,7 @@ APP="Grove"
 NSAPP="grove"
 var_cpu="2"
 var_ram="1024"
-var_disk="8"
+var_disk="4"
 var_unprivileged="1"
 
 msg_info()  { echo -e "${TAB}${YW}  ⏳ ${1}...${CL}"; }
