@@ -3,6 +3,7 @@ set -e
 
 GROVE_DIR="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$GROVE_DIR/frontend"
+PB_VERSION="0.39.0"
 
 echo "==> Updating Grove..."
 
@@ -23,6 +24,29 @@ fi
 
 # Pull latest code
 git -C "$GROVE_DIR" pull --ff-only
+
+# Upgrade PocketBase binary if version changed
+CURRENT_PB=$("$GROVE_DIR/pb/pocketbase" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "0")
+if [ "$CURRENT_PB" != "$PB_VERSION" ]; then
+    echo "==> Upgrading PocketBase $CURRENT_PB → $PB_VERSION..."
+    ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+    PB_FILE="pocketbase_${PB_VERSION}_linux_${ARCH}.zip"
+    curl -fsSL "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/${PB_FILE}" -o /tmp/pb.zip
+    curl -fsSL "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/checksums.txt" -o /tmp/pb.checksums
+    EXPECTED=$(grep "${PB_FILE}" /tmp/pb.checksums | awk '{print $1}')
+    ACTUAL=$(sha256sum /tmp/pb.zip | awk '{print $1}')
+    if [ -z "$EXPECTED" ] || [ "$EXPECTED" != "$ACTUAL" ]; then
+        echo "Error: PocketBase checksum verification failed — aborting"
+        rm -f /tmp/pb.zip /tmp/pb.checksums
+        exit 1
+    fi
+    rm -f /tmp/pb.checksums
+    unzip -q /tmp/pb.zip pocketbase -d /tmp/pb_new
+    chmod +x /tmp/pb_new/pocketbase
+    chown grove:grove /tmp/pb_new/pocketbase
+    mv /tmp/pb_new/pocketbase "$GROVE_DIR/pb/pocketbase"
+    rm -f /tmp/pb.zip
+fi
 
 # Update frontend dependencies and rebuild
 echo "==> Rebuilding frontend..."
