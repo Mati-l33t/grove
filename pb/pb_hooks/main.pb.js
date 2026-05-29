@@ -916,8 +916,16 @@ routerAdd("POST", "/api/grove/chat", (c) => {
     }
 
     function userCanMutateSchoolRecord(rec) {
-        if (rec.getString("user") === authRecord.id) return true
-        return !!(householdId && rec.getString("household") === householdId)
+        if (authRecord.getBool("is_admin")) return true
+        return rec.getString("user") === authRecord.id
+    }
+
+    function userOwnsSchoolChild(childId) {
+        try {
+            var child = $app.dao().findRecordById("school_children", childId)
+            if (authRecord.getBool("is_admin")) return true
+            return child.getString("user") === authRecord.id
+        } catch (_) { return false }
     }
 
     function executeTool(name, args) {
@@ -1413,6 +1421,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             }
 
             if (name === "set_school_schedule") {
+                if (!userOwnsSchoolChild(args.child_id)) return JSON.stringify({ error: "Access denied" })
                 var ssExisting = $app.dao().findRecordsByFilter(
                     "school_schedule",
                     'child = "' + args.child_id + '" && day = "' + args.day + '"',
@@ -1464,6 +1473,7 @@ routerAdd("POST", "/api/grove/chat", (c) => {
             }
 
             if (name === "set_school_lunch") {
+                if (!userOwnsSchoolChild(args.child_id)) return JSON.stringify({ error: "Access denied" })
                 var slExisting = $app.dao().findRecordsByFilter(
                     "school_lunches",
                     'child = "' + args.child_id + '" && date = "' + args.date + '"',
