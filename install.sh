@@ -93,33 +93,6 @@ node "$GROVE_DIR/reminder.js" --setup
 echo "==> Creating service user..."
 id -u grove &>/dev/null || useradd -r -s /sbin/nologin grove
 mkdir -p "$PB_DIR/pb_data"
-chown -R grove:grove "$PB_DIR/pb_data"
-chown grove:grove "$GROVE_DIR/vapid-keys.json"
-chmod 600 "$GROVE_DIR/vapid-keys.json"
-
-# ── Systemd services ───────────────────────────────────────────────────────────
-echo "==> Setting up systemd services..."
-cp "$GROVE_DIR/grove.service" /etc/systemd/system/grove.service
-cp "$GROVE_DIR/grove-reminder.service" /etc/systemd/system/grove-reminder.service
-
-systemctl daemon-reload
-systemctl enable grove.service grove-reminder.service
-systemctl restart grove.service
-echo -n "==> Waiting for PocketBase to start..."
-for i in $(seq 1 30); do
-    if curl -sf http://127.0.0.1:8090/api/health >/dev/null 2>&1; then
-        echo " ready."
-        break
-    fi
-    sleep 1
-    echo -n "."
-    if [ "$i" -eq 30 ]; then
-        echo " timed out — check 'journalctl -u grove' for errors."
-        exit 1
-    fi
-done
-systemctl start grove-reminder.service
-
 
 # ── PocketBase superuser ───────────────────────────────────────────────────────
 if [ "$NONINTERACTIVE" = "1" ]; then
@@ -151,8 +124,27 @@ else
     done
 fi
 
+# Initialise the database and create the admin account before the service starts
+# so there is no race between the CLI writer and the running server.
+echo "==> Initialising database..."
 "$PB_DIR/pocketbase" superuser upsert "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASS" \
-    --dir="$PB_DIR" >/dev/null
+    --dir="$PB_DIR"
+
+# Hand ownership of everything the service will write to over to the grove user
+chown -R grove:grove "$PB_DIR/pb_data"
+chown grove:grove "$GROVE_DIR/vapid-keys.json"
+chmod 600 "$GROVE_DIR/vapid-keys.json"
+
+# ── Systemd services ───────────────────────────────────────────────────────────
+echo "==> Setting up systemd services..."
+cp "$GROVE_DIR/grove.service" /etc/systemd/system/grove.service
+cp "$GROVE_DIR/grove-reminder.service" /etc/systemd/system/grove-reminder.service
+
+systemctl daemon-reload
+systemctl enable grove.service grove-reminder.service
+systemctl restart grove.service
+sleep 2
+systemctl start grove-reminder.service
 
 echo ""
 echo "Grove installed successfully."
