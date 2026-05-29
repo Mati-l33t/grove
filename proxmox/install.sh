@@ -264,9 +264,9 @@ build_container() {
   if [ "$AUTOLOGIN" = "1" ]; then
     msg_info "Configuring autologin"
     pct exec "$CTID" -- bash -c "
-      mkdir -p /etc/systemd/system/container-getty@1.service.d
-      printf '[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin root --noclear --keep-baud tty%%I 115200,38400,9600 \$TERM\n' \
-        > /etc/systemd/system/container-getty@1.service.d/override.conf
+      mkdir -p /etc/systemd/system/console-getty.service.d
+      printf '[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin root --noclear --keep-baud console 115200,38400,9600 \$TERM\n' \
+        > /etc/systemd/system/console-getty.service.d/override.conf
       systemctl daemon-reload
     "
     msg_ok "Autologin configured"
