@@ -105,7 +105,19 @@ cp "$GROVE_DIR/grove-reminder.service" /etc/systemd/system/grove-reminder.servic
 systemctl daemon-reload
 systemctl enable grove.service grove-reminder.service
 systemctl restart grove.service
-sleep 2
+echo -n "==> Waiting for PocketBase to start..."
+for i in $(seq 1 30); do
+    if curl -sf http://127.0.0.1:8090/api/health >/dev/null 2>&1; then
+        echo " ready."
+        break
+    fi
+    sleep 1
+    echo -n "."
+    if [ "$i" -eq 30 ]; then
+        echo " timed out — check 'journalctl -u grove' for errors."
+        exit 1
+    fi
+done
 systemctl start grove-reminder.service
 
 
