@@ -247,6 +247,7 @@ build_container() {
     --net0        "name=eth0,bridge=${BRG},ip=${NET}${GATE}${VLAN_TAG}" \
     --nameserver  "$ns" \
     --unprivileged "$UNPRIVILEGED" \
+    --features    "nesting=1" \
     --onboot      1 \
     --timezone    "$tz"
   msg_ok "LXC container ${CTID} created"
