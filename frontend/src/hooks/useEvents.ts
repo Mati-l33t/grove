@@ -180,14 +180,13 @@ export function useCreateCalendarEvent() {
 
 export function useUpdateEvent() {
   const queryClient = useQueryClient()
-  const { user, household } = useAuthStore()
+  const { household } = useAuthStore()
 
   return useMutation({
     mutationFn: async ({ id, shareMode, sharedWith, assignedUserId, ...data }: EventData & { id: string }) => {
-      const effectiveUser = shareMode === 'private' ? user!.id : assignedUserId
       return pb.collection('events').update(id, {
         ...data,
-        ...(effectiveUser ? { user: effectiveUser } : {}),
+        ...(assignedUserId ? { user: assignedUserId } : {}),
         ...sharingFields(shareMode, sharedWith, household?.id),
       })
     },
