@@ -388,30 +388,31 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
             onChange={(m, members) => { setShareMode(m); setSharedWith(members) }}
           />
 
-          <div className="flex items-center justify-between pt-2 border-t border-border">
-            {mode === 'edit' ? (
-              showDeleteConfirm ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Delete this event?</span>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDelete}
-                    disabled={deleteEvent.isPending}
-                  >
-                    {deleteEvent.isPending ? 'Deleting…' : 'Delete'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDeleteConfirm(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
+          <div className="flex flex-col gap-2 pt-2 border-t border-border">
+            {showDeleteConfirm && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground flex-1">Delete this event?</span>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteEvent.isPending}
+                >
+                  {deleteEvent.isPending ? 'Deleting…' : 'Delete'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              {mode === 'edit' && !showDeleteConfirm ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -422,17 +423,17 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                   <Trash2 className="h-4 w-4 mr-1.5" />
                   Delete
                 </Button>
-              )
-            ) : (
-              <div />
-            )}
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={!title.trim() || isPending}>
-                {isPending ? 'Saving…' : mode === 'create' ? 'Create' : 'Save'}
-              </Button>
+              ) : (
+                <div />
+              )}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={!title.trim() || isPending}>
+                  {isPending ? 'Saving…' : mode === 'create' ? 'Create' : 'Save'}
+                </Button>
+              </div>
             </div>
           </div>
         </form>
