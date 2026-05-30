@@ -165,11 +165,15 @@ export function useCreateCalendarEvent() {
   return useMutation({
     mutationFn: async (data: EventData) => {
       const { shareMode, sharedWith, assignedUserId, ...rest } = data
-      const actualUser = shareMode === 'private' ? user!.id : (assignedUserId || user!.id)
+      const actualUser = assignedUserId || user!.id
+      const sharing = sharingFields(shareMode, sharedWith, household?.id)
+      if (actualUser !== user!.id && !sharing.household && !sharing.shared_with.includes(user!.id)) {
+        sharing.shared_with = [...sharing.shared_with, user!.id]
+      }
       return pb.collection('events').create({
         ...rest,
         user: actualUser,
-        ...sharingFields(shareMode, sharedWith, household?.id),
+        ...sharing,
       })
     },
     onSuccess: () => {
@@ -180,14 +184,18 @@ export function useCreateCalendarEvent() {
 
 export function useUpdateEvent() {
   const queryClient = useQueryClient()
-  const { household } = useAuthStore()
+  const { user, household } = useAuthStore()
 
   return useMutation({
     mutationFn: async ({ id, shareMode, sharedWith, assignedUserId, ...data }: EventData & { id: string }) => {
+      const sharing = sharingFields(shareMode, sharedWith, household?.id)
+      if (assignedUserId && assignedUserId !== user!.id && !sharing.household && !sharing.shared_with.includes(user!.id)) {
+        sharing.shared_with = [...sharing.shared_with, user!.id]
+      }
       return pb.collection('events').update(id, {
         ...data,
         ...(assignedUserId ? { user: assignedUserId } : {}),
-        ...sharingFields(shareMode, sharedWith, household?.id),
+        ...sharing,
       })
     },
     onSuccess: () => {
