@@ -182,28 +182,29 @@ export default function EventViewDialog({ open, event, onClose, onEdit }: Props)
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-border gap-2">
-          {canEdit && (
-            confirmDelete ? (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Delete this event?</span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={deleteEvent.isPending}
-                >
-                  {deleteEvent.isPending ? 'Deleting…' : 'Delete'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setConfirmDelete(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
+        <div className="flex flex-col gap-2 pt-3 border-t border-border">
+          {confirmDelete && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground flex-1">Delete this event?</span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleteEvent.isPending}
+              >
+                {deleteEvent.isPending ? 'Deleting…' : 'Delete'}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmDelete(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            {canEdit && !confirmDelete ? (
               <Button
                 variant="ghost"
                 size="sm"
@@ -213,17 +214,16 @@ export default function EventViewDialog({ open, event, onClose, onEdit }: Props)
                 <Trash2 className="h-4 w-4 mr-1.5" />
                 Delete
               </Button>
-            )
-          )}
-
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" onClick={onClose}>Close</Button>
-            {canEdit && (
-              <Button onClick={() => { setConfirmDelete(false); onEdit() }}>
-                <Pencil className="h-4 w-4 mr-1.5" />
-                Edit
-              </Button>
-            )}
+            ) : <div />}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onClose}>Close</Button>
+              {canEdit && (
+                <Button onClick={() => { setConfirmDelete(false); onEdit() }}>
+                  <Pencil className="h-4 w-4 mr-1.5" />
+                  Edit
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>
