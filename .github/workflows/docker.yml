@@ -50,4 +50,4 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            PB_VERSION=0.22.27
+            PB_VERSION=0.39.0
