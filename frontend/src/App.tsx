@@ -59,7 +59,7 @@ export default function App() {
 
   useEffect(() => {
     const url = appSettings?.logo
-      ? pb.files.getUrl(appSettings as never, appSettings.logo)
+      ? pb.files.getURL(appSettings as never, appSettings.logo)
       : null
     document.querySelectorAll<HTMLLinkElement>('link[rel="icon"], link[rel="apple-touch-icon"]')
       .forEach((el) => {

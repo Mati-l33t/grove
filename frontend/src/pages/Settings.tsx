@@ -170,7 +170,7 @@ export default function Settings() {
   }
 
   const avatarUrl = avatarPreview
-    ?? (user?.avatar ? pb.files.getUrl(user as never, user.avatar, { thumb: '100x100' }) : null)
+    ?? (user?.avatar ? pb.files.getURL(user as never, user.avatar, { thumb: '100x100' }) : null)
 
   const initials = (user?.name ?? '?')
     .split(' ')

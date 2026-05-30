@@ -13,7 +13,7 @@ export default function AppLogo({ className }: AppLogoProps) {
   if (settings?.logo) {
     return (
       <img
-        src={pb.files.getUrl(settings as never, settings.logo)}
+        src={pb.files.getURL(settings as never, settings.logo)}
         alt=""
         aria-hidden="true"
         className={cn('object-contain shrink-0', className)}

@@ -180,7 +180,7 @@ function UsersPanel() {
             const initials = (u.name || '?')
               .split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)
             const avatarUrl = u.avatar
-              ? pb.files.getUrl(u as never, u.avatar, { thumb: '64x64' })
+              ? pb.files.getURL(u as never, u.avatar, { thumb: '64x64' })
               : null
             const isDeletingThis = deletingId === u.id
             const isSelf = u.id === currentUser?.id
@@ -599,7 +599,7 @@ function SettingsPanel() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
 
   const logoUrl = settings?.logo
-    ? pb.files.getUrl(settings as never, settings.logo)
+    ? pb.files.getURL(settings as never, settings.logo)
     : null
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {

@@ -6,7 +6,7 @@ import type { Recipe } from '@/types'
 
 export default function RecipeCard({ recipe }: { recipe: Recipe }) {
   const imageUrl = recipe.image
-    ? pb.files.getUrl(recipe as never, recipe.image, { thumb: '400x300' })
+    ? pb.files.getURL(recipe as never, recipe.image, { thumb: '400x300' })
     : null
 
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)

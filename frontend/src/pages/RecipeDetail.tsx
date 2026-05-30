@@ -279,7 +279,7 @@ export default function RecipeDetail() {
   // ── Edit / Create form ─────────────────────────────────────────────────────
   if (isEditing) {
     const existingImageUrl = recipe?.image
-      ? pb.files.getUrl(recipe as never, recipe.image, { thumb: '800x600' })
+      ? pb.files.getURL(recipe as never, recipe.image, { thumb: '800x600' })
       : null
     const displayImage = imagePreview ?? existingImageUrl
 
@@ -503,7 +503,7 @@ export default function RecipeDetail() {
   }
 
   const imageUrl = recipe.image
-    ? pb.files.getUrl(recipe as never, recipe.image, { thumb: '800x600' })
+    ? pb.files.getURL(recipe as never, recipe.image, { thumb: '800x600' })
     : null
 
   const viewIngredients = parseIngredients(recipe.ingredients)

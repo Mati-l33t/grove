@@ -125,7 +125,7 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
   const isSelf = mode === 'edit' && user?.id === currentUser?.id
 
   const existingAvatarUrl = mode === 'edit' && user?.avatar
-    ? pb.files.getUrl(user as never, user.avatar, { thumb: '100x100' })
+    ? pb.files.getURL(user as never, user.avatar, { thumb: '100x100' })
     : null
   const avatarUrl = avatarPreview ?? existingAvatarUrl
   const initials = (name || '?').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
