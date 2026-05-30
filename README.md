@@ -48,6 +48,13 @@ docker compose up -d
 
 Grove will be available at `http://localhost:8090`. All data is stored in a named Docker volume (`grove_data`) and is never affected by updates or container restarts.
 
+If port 8090 is already in use, change the left side of the port mapping in `docker-compose.yml`:
+
+```yaml
+ports:
+  - "8091:8090"   # accessible at :8091
+```
+
 Pre-built images for `linux/amd64` and `linux/arm64`:
 ```
 ghcr.io/mati-l33t/grove:latest
@@ -57,9 +64,36 @@ ghcr.io/mati-l33t/grove:latest
 
 ## First-time setup
 
-1. Open `http://<host>:8090/_/` — set your PocketBase superuser email and password here.
-2. Open `http://<host>:8090` and register your account. The first registered user is automatically granted admin access.
-3. Go to Settings to create or join a household and start sharing content with family members.
+### 1. Create the PocketBase superuser
+
+The PocketBase superuser is a separate low-level account used to manage the database directly at `/_/`. It is not the same as your Grove account.
+
+**Option A — one-time URL (Docker/LXC):**  
+On first start, PocketBase prints a setup URL in the logs:
+
+```
+docker logs grove 2>&1 | grep pbinstall
+```
+
+Copy the full URL, replace `0.0.0.0` with your server's IP, and open it in a browser to set your superuser email and password.
+
+**Option B — CLI:**
+
+```bash
+# Docker
+docker exec -it grove /app/pocketbase superuser upsert your@email.com yourpassword
+
+# LXC / manual install
+/app/pocketbase superuser upsert your@email.com yourpassword
+```
+
+### 2. Create your Grove account
+
+Open `http://<host>:8090` and register. The first registered user is automatically granted admin access.
+
+### 3. Set up your household
+
+Go to Settings to create or join a household and start sharing content with family members.
 
 ---
 
