@@ -515,21 +515,29 @@ function UpdateCard() {
           App updates
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Installed version</span>
-          <a
-            href={`https://github.com/Mati-l33t/grove/releases/tag/v${__APP_VERSION__}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex"
-          >
-            <Badge variant="outline" className="cursor-pointer hover:bg-accent transition-colors">
-              v{__APP_VERSION__}
-            </Badge>
-          </a>
-          {runtime === 'docker' && (
-            <Badge variant="secondary" className="text-xs">Docker</Badge>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm flex-wrap">
+            <span className="text-muted-foreground">Installed</span>
+            <Badge variant="outline">v{__APP_VERSION__}</Badge>
+            {runtime === 'docker' && (
+              <Badge variant="secondary" className="text-xs">Docker</Badge>
+            )}
+            <a
+              href="https://github.com/Mati-l33t/grove/blob/main/CHANGELOG.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Changelog
+            </a>
+          </div>
+          {!updateStarted && (
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
+              {isFetching ? 'Checking…' : 'Check for updates'}
+            </Button>
           )}
         </div>
 
@@ -572,14 +580,9 @@ function UpdateCard() {
             )}
           </div>
         ) : updateInfo ? (
-          <p className="text-sm text-muted-foreground">Up to date</p>
+          <p className="text-sm text-muted-foreground">You're on the latest version.</p>
         ) : (
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-muted-foreground">Could not check for updates</p>
-            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
-              {isFetching ? 'Checking…' : 'Retry'}
-            </Button>
-          </div>
+          <p className="text-sm text-muted-foreground">Could not check for updates.</p>
         )}
       </CardContent>
     </Card>
