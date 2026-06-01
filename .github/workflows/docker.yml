@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -51,3 +51,8 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             PB_VERSION=0.39.0
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: false
