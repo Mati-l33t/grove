@@ -84,6 +84,35 @@ export interface InstanceSettings {
   registration_open: boolean
   default_theme: 'dark' | 'light'
   logo?: string
+  holidays_enabled?: boolean
+  holiday_countries?: string[]
+  holidays_last_imported?: string
+}
+
+export interface Holiday {
+  id: string
+  date: string
+  name: string
+  local_name: string
+  country_code: string
+  year: number
+}
+
+export interface NagerCountry {
+  countryCode: string
+  name: string
+}
+
+export interface NagerHoliday {
+  date: string
+  localName: string
+  name: string
+  countryCode: string
+  fixed: boolean
+  global: boolean
+  counties: string[] | null
+  launchYear: number | null
+  types: string[]
 }
 
 export interface AdminUser extends User {

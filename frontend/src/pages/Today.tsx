@@ -8,6 +8,7 @@ import {
   CalendarDays,
   CheckSquare,
   ChevronRight,
+  Globe,
   Plus,
   ShoppingCart,
   UtensilsCrossed,
@@ -15,7 +16,8 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { DiaTextReveal } from '@/components/ui/dia-text-reveal'
-import { useTodayEvents, useUpcomingWeekEvents } from '@/hooks/useEvents'
+import { useTodayEvents, useUpcomingWeekEvents, useTodayHolidays } from '@/hooks/useEvents'
+import { useInstanceSettings } from '@/hooks/useAdmin'
 import { useHour12, formatTime } from '@/lib/timeFormat'
 import { useActiveLists, useCreateListItem } from '@/hooks/useLists'
 import { useTodayMealPlan } from '@/hooks/useMealPlan'
@@ -106,6 +108,9 @@ export default function Today() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [handleScroll])
+
+  const { data: instanceSettings } = useInstanceSettings()
+  const { data: todayHolidays = [] } = useTodayHolidays(instanceSettings?.holidays_enabled ?? false)
 
   const eventsQuery = useTodayEvents()
   const weekQuery = useUpcomingWeekEvents()
@@ -220,6 +225,21 @@ export default function Today() {
               icon={<Calendar className="h-3.5 w-3.5" />}
               href="/calendar"
             />
+            {todayHolidays.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {todayHolidays.map(h => (
+                  <span
+                    key={h.id}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-muted text-muted-foreground text-xs px-2.5 py-1"
+                  >
+                    <Globe className="h-3 w-3 shrink-0" />
+                    {h.local_name || h.name}
+                    <span className="opacity-60">· {h.country_code}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
             {eventsQuery.isLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-14 w-full rounded-lg" />

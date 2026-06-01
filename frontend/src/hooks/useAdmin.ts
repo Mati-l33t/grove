@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import pb from '@/lib/pb'
-import type { AdminUser, AiSettings, InstanceSettings, SmtpSettings, UserPermissions } from '@/types'
+import type { AdminUser, AiSettings, InstanceSettings, NagerCountry, SmtpSettings, UserPermissions } from '@/types'
 
 export function useAdminStats() {
   return useQuery({
@@ -206,6 +206,58 @@ export function useSaveInstanceSettings() {
         : pb.collection('instance_settings').create(data)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'instance_settings'] }),
+  })
+}
+
+export function useNagerCountries() {
+  return useQuery({
+    queryKey: ['nager', 'countries'],
+    queryFn: async () => {
+      const res = await pb.send('/api/grove/nager-countries', { method: 'GET' })
+      return res as NagerCountry[]
+    },
+    staleTime: 24 * 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+    retry: 1,
+  })
+}
+
+export function useSaveHolidaySettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, holidays_enabled, holiday_countries }: {
+      id?: string
+      holidays_enabled: boolean
+      holiday_countries: string[]
+    }) => {
+      const data = { holidays_enabled, holiday_countries }
+      return id
+        ? pb.collection('instance_settings').update(id, data)
+        : pb.collection('instance_settings').create(data)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'instance_settings'] }),
+  })
+}
+
+export function useImportHolidays() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ countries, settingsId, holidaysEnabled }: {
+      countries: string[]
+      settingsId?: string
+      holidaysEnabled: boolean
+    }) => {
+      const res = await pb.send('/api/grove/import-holidays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ countries, settings_id: settingsId, holidays_enabled: holidaysEnabled }),
+      }) as { imported: number }
+      return res.imported
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['holidays'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'instance_settings'] })
+    },
   })
 }
 

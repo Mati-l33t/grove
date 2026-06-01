@@ -105,7 +105,7 @@ export function MonthEventBadge({
             </p>
           )}
         </div>
-        {renderBadgeText && <span>{format(new Date(event.startDate), hour12 ? "h:mm a" : "HH:mm")}</span>}
+        {renderBadgeText && !event.allDay && <span>{format(new Date(event.startDate), hour12 ? "h:mm a" : "HH:mm")}</span>}
       </div>
     </DraggableEvent>
   )

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import {
-  AlertTriangle, BookOpen, Bot, Calendar, Check, Copy, Eye, EyeOff, ExternalLink, Leaf, List, Mail,
-  Pencil, RefreshCw, Search, ShieldCheck, Trash2, UserPlus, Users2,
+  AlertTriangle, BookOpen, Bot, Calendar, Check, Copy, Eye, EyeOff, ExternalLink, Globe, Leaf, List,
+  Mail, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, UserPlus, Users2, X,
   Home,
 } from 'lucide-react'
 import pb from '@/lib/pb'
@@ -15,18 +15,20 @@ import {
   useInstanceSettings, useSaveInstanceSettings, useUploadInstanceLogo, useRemoveInstanceLogo,
   useSmtpSettings, useSaveSmtpSettings,
   useAiSettings, useSaveAiSettings,
+  useNagerCountries, useSaveHolidaySettings, useImportHolidays,
   useUpdateCheck, useRunUpdate, useGroveRuntime,
 } from '@/hooks/useAdmin'
 import AdminShell from '@/components/admin/AdminShell'
 import UserEditModal from '@/components/admin/UserEditModal'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { AdminUser } from '@/types'
+import type { AdminUser, NagerCountry } from '@/types'
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
@@ -584,6 +586,204 @@ function UpdateCard() {
   )
 }
 
+// ─── Holidays ────────────────────────────────────────────────────────────────
+
+function HolidaysCard() {
+  const { data: settings, isLoading } = useInstanceSettings()
+  const { data: availableCountries = [], isLoading: countriesLoading, isError: countriesError } = useNagerCountries()
+  const saveHolidays = useSaveHolidaySettings()
+  const importHolidays = useImportHolidays()
+
+  const [enabled, setEnabled] = useState(false)
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([])
+  const [showPicker, setShowPicker] = useState(false)
+  const [countrySearch, setCountrySearch] = useState('')
+
+  useEffect(() => {
+    if (settings) {
+      setEnabled(settings.holidays_enabled ?? false)
+      setSelectedCountries(Array.isArray(settings.holiday_countries) ? settings.holiday_countries : [])
+    }
+  }, [settings])
+
+  const filteredCountries = useMemo(() => {
+    const q = countrySearch.toLowerCase()
+    return q
+      ? availableCountries.filter((c: NagerCountry) =>
+          c.name.toLowerCase().includes(q) || c.countryCode.toLowerCase().includes(q)
+        )
+      : availableCountries
+  }, [availableCountries, countrySearch])
+
+  function toggleCountry(code: string) {
+    setSelectedCountries(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code])
+  }
+
+  function removeCountry(code: string) {
+    setSelectedCountries(prev => prev.filter(c => c !== code))
+  }
+
+  function countryName(code: string) {
+    return availableCountries.find((c: NagerCountry) => c.countryCode === code)?.name ?? code
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    try {
+      await saveHolidays.mutateAsync({ id: settings?.id, holidays_enabled: enabled, holiday_countries: selectedCountries })
+      toast.success('Holiday settings saved.')
+    } catch {
+      toast.error('Failed to save holiday settings.')
+    }
+  }
+
+  async function handleImport() {
+    if (!selectedCountries.length) { toast.error('Select at least one country first.'); return }
+    try {
+      const count = await importHolidays.mutateAsync({
+        countries: selectedCountries,
+        settingsId: settings?.id,
+        holidaysEnabled: enabled,
+      })
+      toast.success(`${count} holidays imported.`)
+    } catch {
+      toast.error('Failed to import holidays. Check your internet connection.')
+    }
+  }
+
+  if (isLoading) return <Skeleton className="h-32 rounded-lg" />
+
+  return (
+    <form onSubmit={handleSave}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="h-4 w-4" />
+            Public holidays
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+              className="h-4 w-4 accent-primary cursor-pointer rounded"
+            />
+            <span className="text-sm font-medium">Show public holidays on calendar</span>
+          </label>
+
+          {enabled && (
+            <div className="space-y-3 pt-1">
+              <div className="space-y-2">
+                <Label>Countries</Label>
+
+                {selectedCountries.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedCountries.map(code => (
+                      <span
+                        key={code}
+                        className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary text-xs px-2.5 py-1"
+                      >
+                        {countryName(code)}
+                        <button
+                          type="button"
+                          onClick={() => removeCountry(code)}
+                          className="hover:opacity-70"
+                          aria-label={`Remove ${countryName(code)}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {showPicker ? (
+                  <div className="border border-border rounded-md">
+                    <div className="p-2 border-b border-border">
+                      <Input
+                        placeholder="Search countries…"
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <ScrollArea className="h-48">
+                      <div className="p-1">
+                        {countriesLoading ? (
+                          <p className="text-xs text-muted-foreground p-2">Loading countries…</p>
+                        ) : countriesError ? (
+                          <p className="text-xs text-muted-foreground p-2">
+                            Could not load country list. Check your internet connection.
+                          </p>
+                        ) : filteredCountries.length === 0 ? (
+                          <p className="text-xs text-muted-foreground p-2">No countries found.</p>
+                        ) : (
+                          filteredCountries.map((c: NagerCountry) => (
+                            <button
+                              key={c.countryCode}
+                              type="button"
+                              onClick={() => toggleCountry(c.countryCode)}
+                              className="w-full flex items-center justify-between px-2 py-1.5 rounded text-sm hover:bg-accent transition-colors text-left"
+                            >
+                              <span>{c.name}</span>
+                              {selectedCountries.includes(c.countryCode) && (
+                                <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                              )}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
+                    <div className="p-2 border-t border-border">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setShowPicker(false); setCountrySearch('') }}
+                      >
+                        Done
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShowPicker(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />
+                    Add country
+                  </Button>
+                )}
+              </div>
+
+              {settings?.holidays_last_imported && (
+                <p className="text-xs text-muted-foreground">
+                  Last imported: {format(new Date(settings.holidays_last_imported.replace(' ', 'T')), 'MMM d, yyyy')}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-2 flex-wrap">
+            <Button type="submit" disabled={saveHolidays.isPending}>
+              {saveHolidays.isPending ? 'Saving…' : 'Save'}
+            </Button>
+            {enabled && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={importHolidays.isPending || !selectedCountries.length}
+                onClick={handleImport}
+              >
+                {importHolidays.isPending ? 'Importing…' : 'Import holidays'}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </form>
+  )
+}
+
 // ─── Instance settings ────────────────────────────────────────────────────────
 
 function SettingsPanel() {
@@ -766,6 +966,7 @@ function SettingsPanel() {
     </div>
     <UpdateCard />
     <AiSettingsCard />
+    <HolidaysCard />
     </div>
   )
 }

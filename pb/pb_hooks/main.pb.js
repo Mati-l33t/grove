@@ -1616,6 +1616,100 @@ routerAdd("POST", "/api/grove/chat", (c) => {
     return c.json(500, { message: "Too many tool iterations — please try a simpler request." })
 }, $apis.requireAuth())
 
+routerAdd("GET", "/api/grove/nager-countries", (c) => {
+    var res
+    try {
+        res = $http.send({
+            url: "https://date.nager.at/api/v3/AvailableCountries",
+            method: "GET",
+            headers: { "Accept": "application/json" },
+            timeout: 15,
+        })
+    } catch (e) {
+        return c.json(502, { message: "Could not reach holiday service: " + String(e) })
+    }
+    if (res.statusCode !== 200) {
+        return c.json(502, { message: "Holiday service returned HTTP " + res.statusCode })
+    }
+    return c.json(200, res.json)
+}, $apis.requireAuth())
+
+routerAdd("POST", "/api/grove/import-holidays", (c) => {
+    const authRecord = c.auth
+    if (!authRecord || !authRecord.getBool("is_admin")) {
+        return c.json(403, { message: "Forbidden" })
+    }
+
+    const body = c.requestInfo().body
+    const countries = body.countries
+    const settingsId = body.settings_id || ""
+    const holidaysEnabled = body.holidays_enabled === true
+
+    if (!Array.isArray(countries) || countries.length === 0) {
+        return c.json(400, { message: "countries is required" })
+    }
+
+    const currentYear = new Date().getFullYear()
+    const years = [currentYear, currentYear + 1]
+
+    for (var di = 0; di < countries.length; di++) {
+        const code = countries[di]
+        const existing = $app.findRecordsByFilter("holidays", 'country_code = "' + code + '"', "", 2000, 0)
+        for (var ei = 0; ei < existing.length; ei++) {
+            $app.delete(existing[ei])
+        }
+    }
+
+    const holidaysCol = $app.findCollectionByNameOrId("holidays")
+    var totalImported = 0
+
+    for (var ci = 0; ci < countries.length; ci++) {
+        const code = countries[ci]
+        for (var yi = 0; yi < years.length; yi++) {
+            const year = years[yi]
+            var res
+            try {
+                res = $http.send({
+                    url: "https://date.nager.at/api/v3/PublicHolidays/" + year + "/" + code,
+                    method: "GET",
+                    headers: { "Accept": "application/json" },
+                    timeout: 15,
+                })
+            } catch (_) { continue }
+
+            if (res.statusCode !== 200) continue
+            const holidays = res.json
+            if (!Array.isArray(holidays)) continue
+
+            for (var hi = 0; hi < holidays.length; hi++) {
+                const h = holidays[hi]
+                try {
+                    const record = new Record(holidaysCol)
+                    record.set("date", h.date + " 00:00:00.000Z")
+                    record.set("name", h.name || "")
+                    record.set("local_name", h.localName || "")
+                    record.set("country_code", code)
+                    record.set("year", year)
+                    $app.save(record)
+                    totalImported++
+                } catch (_) {}
+            }
+        }
+    }
+
+    if (settingsId) {
+        try {
+            const settings = $app.findRecordById("instance_settings", settingsId)
+            settings.set("holidays_enabled", holidaysEnabled)
+            settings.set("holiday_countries", countries)
+            settings.set("holidays_last_imported", new Date().toISOString().replace("T", " "))
+            $app.save(settings)
+        } catch (_) {}
+    }
+
+    return c.json(200, { imported: totalImported })
+}, $apis.requireAuth())
+
 onRecordAfterCreateSuccess((e) => {
     const others = $app.findRecordsByFilter(
         "users",

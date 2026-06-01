@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, startOfToday, addDays, addMonths, addYears, endOfWeek } from 'date-fns'
 import pb from '@/lib/pb'
 import { useAuthStore } from '@/stores/authStore'
-import type { CalendarEvent, ShareMode } from '@/types'
+import type { CalendarEvent, Holiday, ShareMode } from '@/types'
 
 function advanceToOrAfter(start: Date, recurring: string, from: Date): Date {
   let d = new Date(start)
@@ -110,6 +110,41 @@ export function useAllEvents(start: Date | null, end: Date | null) {
       return records as unknown as CalendarEvent[]
     },
     enabled: !!user && !!start && !!end,
+  })
+}
+
+export function useCalendarHolidays(start: Date | null, end: Date | null, enabled = true) {
+  return useQuery({
+    queryKey: ['holidays', 'range', start?.toISOString(), end?.toISOString()],
+    enabled: enabled && !!start && !!end,
+    queryFn: async () => {
+      const startUtc = start!.toISOString().replace('T', ' ')
+      const endUtc = end!.toISOString().replace('T', ' ')
+      const records = await pb.collection('holidays').getFullList({
+        filter: `date >= "${startUtc}" && date < "${endUtc}"`,
+        sort: 'date',
+      })
+      return records as unknown as Holiday[]
+    },
+    staleTime: 60 * 60 * 1000,
+  })
+}
+
+export function useTodayHolidays(enabled = true) {
+  const todayKey = format(startOfToday(), 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['holidays', 'today', todayKey],
+    enabled,
+    queryFn: async () => {
+      const todayStr = format(startOfToday(), 'yyyy-MM-dd')
+      const tomorrowStr = format(addDays(startOfToday(), 1), 'yyyy-MM-dd')
+      const records = await pb.collection('holidays').getFullList({
+        filter: `date >= "${todayStr} 00:00:00.000Z" && date < "${tomorrowStr} 00:00:00.000Z"`,
+        sort: 'name',
+      })
+      return records as unknown as Holiday[]
+    },
+    staleTime: 60 * 60 * 1000,
   })
 }
 

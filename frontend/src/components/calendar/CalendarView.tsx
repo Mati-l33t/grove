@@ -4,7 +4,8 @@ import {
   startOfMonth, endOfMonth, startOfYear, endOfYear,
   startOfWeek, endOfWeek, startOfDay, endOfDay, format,
 } from 'date-fns'
-import { useAllEvents } from '@/hooks/useEvents'
+import { useAllEvents, useCalendarHolidays } from '@/hooks/useEvents'
+import { useInstanceSettings } from '@/hooks/useAdmin'
 import { useAuthStore } from '@/stores/authStore'
 import { useHouseholdMembers } from '@/hooks/useHousehold'
 import { useHour12, useWeekStart } from '@/lib/timeFormat'
@@ -14,7 +15,7 @@ import { ClientContainer } from './bc/components/client-container'
 import EventModal from './EventModal'
 import EventViewDialog from './EventViewDialog'
 import { hexToEventColor } from './bc/helpers'
-import type { CalendarEvent } from '@/types'
+import type { CalendarEvent, Holiday } from '@/types'
 import type { IEvent, IUser } from './bc/interfaces'
 import type { TCalendarView } from './bc/types'
 
@@ -177,9 +178,12 @@ export default function CalendarView() {
   }, [view, selectedDate, firstDayOfWeek])
 
   const { data: rawEvents = [] } = useAllEvents(rangeStart, rangeEnd)
+  const { data: instanceSettings } = useInstanceSettings()
+  const holidaysEnabled = instanceSettings?.holidays_enabled ?? false
+  const { data: rawHolidays = [] } = useCalendarHolidays(rangeStart, rangeEnd, holidaysEnabled)
 
   const bcEvents: IEvent[] = useMemo(() => {
-    return rawEvents.flatMap(event => {
+    const regularEvents = rawEvents.flatMap(event => {
       const toIEvent = (e: CalendarEvent, start: Date, suffix: string) =>
         groveEventToIEvent(e, start, suffix, members)
 
@@ -195,7 +199,20 @@ export default function CalendarView() {
         toIEvent
       )
     })
-  }, [rawEvents, rangeStart, rangeEnd, members])
+
+    const holidayEvents: IEvent[] = rawHolidays.map((h: Holiday) => ({
+      id: `hol_${h.id}`,
+      title: h.local_name || h.name,
+      description: '',
+      startDate: format(new Date(h.date.replace(' ', 'T')), "yyyy-MM-dd'T'00:00:00"),
+      endDate: format(new Date(h.date.replace(' ', 'T')), "yyyy-MM-dd'T'00:00:00"),
+      color: hexToEventColor('#ef4444'),
+      user: { id: '', name: '', picturePath: null },
+      allDay: true,
+    }))
+
+    return [...regularEvents, ...holidayEvents]
+  }, [rawEvents, rawHolidays, rangeStart, rangeEnd, members])
 
   const bcUsers: IUser[] = useMemo(() => {
     if (!user) return []
@@ -224,6 +241,7 @@ export default function CalendarView() {
   const [defaultDate, setDefaultDate] = useState<string | undefined>()
 
   function handleEventClick(bcEvent: IEvent) {
+    if (bcEvent.id.startsWith('hol_')) return
     const baseId = bcEvent.id.includes('_') ? bcEvent.id.split('_')[0] : bcEvent.id
     const raw = rawEvents.find(e => e.id === baseId)
     if (!raw) return
