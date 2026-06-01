@@ -497,6 +497,17 @@ function UpdateCard() {
     }
   }
 
+  async function handleCheckForUpdates() {
+    const result = await refetch()
+    if (result.data?.hasUpdate) {
+      toast.info(`v${result.data.latest} is available`)
+    } else if (result.data) {
+      toast.success('You are on the latest version')
+    } else {
+      toast.error('Could not check for updates')
+    }
+  }
+
   function copyDockerCmd() {
     navigator.clipboard.writeText(DOCKER_UPDATE_CMD).then(() => {
       setCopied(true)
@@ -534,7 +545,7 @@ function UpdateCard() {
             </a>
           </div>
           {!updateStarted && (
-            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <Button variant="outline" size="sm" onClick={handleCheckForUpdates} disabled={isFetching}>
               <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
               {isFetching ? 'Checking…' : 'Check for updates'}
             </Button>
