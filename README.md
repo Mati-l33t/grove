@@ -4,6 +4,11 @@
 
 Keep your family organised with an app that runs on your own server. All data stays at home.
 
+<p align="center">
+  <img src="screenshots/grove-dark.png" alt="Grove dark mode" width="49%" />
+  <img src="screenshots/grove-light.png" alt="Grove light mode" width="49%" />
+</p>
+
 ---
 
 ## Features
