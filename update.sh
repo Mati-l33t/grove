@@ -22,6 +22,11 @@ if [ "$NODE_MAJOR" -lt 22 ]; then
     fi
 fi
 
+# Remove any untracked migration files that are now tracked in the repo
+# (PocketBase can write migrations locally before they are committed upstream)
+git -C "$GROVE_DIR" fetch origin main
+git -C "$GROVE_DIR" clean -f -- pb/pb_migrations/
+
 # Pull latest code
 git -C "$GROVE_DIR" pull --ff-only
 
