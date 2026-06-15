@@ -18,5 +18,5 @@ export function useWeekStart(): 0 | 1 {
 }
 
 export function formatTime(date: Date, hour12: boolean): string {
-  return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12 })
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12 })
 }

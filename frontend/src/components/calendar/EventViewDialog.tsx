@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { MapPin, Pencil, RefreshCw, Bell, Trash2, Users, Lock } from 'lucide-react'
+import { useHour12, formatTime } from '@/lib/timeFormat'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,7 @@ function pbToDate(pbDate: string): Date {
   return new Date(pbDate.replace(' ', 'T'))
 }
 
-function formatDateRange(event: CalendarEvent): string {
+function formatDateRange(event: CalendarEvent, hour12: boolean): string {
   const start = pbToDate(event.start)
   const end = event.end ? pbToDate(event.end) : start
 
@@ -38,9 +39,9 @@ function formatDateRange(event: CalendarEvent): string {
 
   const sameDay = format(start, 'yyyy-MM-dd') === format(end, 'yyyy-MM-dd')
   if (sameDay) {
-    return `${format(start, 'EEE, d MMM yyyy')}, ${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`
+    return `${format(start, 'EEE, d MMM yyyy')}, ${formatTime(start, hour12)} – ${formatTime(end, hour12)}`
   }
-  return `${format(start, 'EEE, d MMM, HH:mm')} – ${format(end, 'EEE, d MMM yyyy, HH:mm')}`
+  return `${format(start, 'EEE, d MMM')}, ${formatTime(start, hour12)} – ${format(end, 'EEE, d MMM yyyy')}, ${formatTime(end, hour12)}`
 }
 
 function formatRecurring(event: CalendarEvent): string {
@@ -80,6 +81,7 @@ export default function EventViewDialog({ open, event, onClose, onEdit }: Props)
   const { user } = useAuthStore()
   const { data: members = [] } = useHouseholdMembers()
   const deleteEvent = useDeleteEvent()
+  const hour12 = useHour12()
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   if (!event) return null
@@ -135,7 +137,7 @@ export default function EventViewDialog({ open, event, onClose, onEdit }: Props)
 
         <div className="space-y-3 text-sm">
           {/* Date / time */}
-          <p className="font-medium text-foreground">{formatDateRange(event)}</p>
+          <p className="font-medium text-foreground">{formatDateRange(event, hour12)}</p>
 
           {/* Assigned to */}
           <div className="flex items-center gap-2 text-muted-foreground">
