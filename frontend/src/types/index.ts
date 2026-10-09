@@ -29,6 +29,7 @@ export interface User {
   permissions?: UserPermissions
   time_format?: '12h' | '24h'
   week_start?: 'monday' | 'sunday'
+  language?: string
   show_weather?: boolean
   weather_unit?: 'celsius' | 'fahrenheit'
   notification_prefs?: NotificationPrefs

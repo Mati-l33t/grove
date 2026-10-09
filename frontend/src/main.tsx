@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import { NotificationProvider } from './hooks/useNotifications'
+import './lib/i18n'
+import { applyLanguagePreference } from './lib/i18n'
 import pb from './lib/pb'
 import { useAuthStore } from './stores/authStore'
 import type { User } from './types'
@@ -81,12 +83,17 @@ if ('serviceWorker' in navigator) {
 pb.authStore.onChange((_, model) => {
   const { setUser, setHousehold } = useAuthStore.getState()
   if (model) {
-    setUser(model as unknown as User)
+    const u = model as unknown as User
+    setUser(u)
+    if (u.language) applyLanguagePreference(u.language)
   } else {
     setUser(null)
     setHousehold(null)
   }
 })
+
+const initialUser = useAuthStore.getState().user
+if (initialUser?.language) applyLanguagePreference(initialUser.language)
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

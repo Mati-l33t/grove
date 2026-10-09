@@ -1,4 +1,5 @@
 import { Menu } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useDrawerStore } from '@/stores/drawerStore'
 import ThemeToggle from './ThemeToggle'
 
@@ -8,6 +9,7 @@ interface TopBarProps {
 }
 
 export default function TopBar({ title, actions }: TopBarProps) {
+  const { t } = useTranslation()
   const setOpen = useDrawerStore((s) => s.setOpen)
 
   return (
@@ -16,7 +18,7 @@ export default function TopBar({ title, actions }: TopBarProps) {
         <button
           onClick={() => setOpen(true)}
           className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Open menu"
+          aria-label={t('nav.openMenu')}
         >
           <Menu className="h-5 w-5" />
         </button>

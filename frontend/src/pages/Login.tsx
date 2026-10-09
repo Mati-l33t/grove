@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitch from '@/components/layout/LanguageSwitch'
 import pb from '@/lib/pb'
 import { useAuthStore } from '@/stores/authStore'
 import { useHousehold } from '@/hooks/useHousehold'
@@ -14,6 +16,7 @@ import { BorderBeam } from '@/components/ui/border-beam'
 import type { User } from '@/types'
 
 export default function Login() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { setUser, setHousehold } = useAuthStore()
   const { fetchHousehold } = useHousehold()
@@ -42,7 +45,7 @@ export default function Login() {
 
       navigate('/')
     } catch {
-      toast.error('Invalid email or password.')
+      toast.error(t('auth.invalidCredentials'))
     } finally {
       setLoading(false)
     }
@@ -56,22 +59,22 @@ export default function Login() {
             <AppLogo className="h-8 w-8" />
             <span className="text-2xl font-bold tracking-tight">{appSettings?.app_name || 'Grove'}</span>
           </div>
-          <p className="text-sm text-muted-foreground">Your family organizer</p>
+          <p className="text-sm text-muted-foreground">{t('auth.tagline')}</p>
         </div>
 
         <Card className="relative overflow-hidden">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">Sign in</CardTitle>
-            <CardDescription>Enter your credentials to continue</CardDescription>
+            <CardTitle className="text-xl">{t('auth.signIn')}</CardTitle>
+            <CardDescription>{t('auth.signInHint')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="identity">Email or username</Label>
+                <Label htmlFor="identity">{t('auth.identity')}</Label>
                 <Input
                   id="identity"
                   type="text"
-                  placeholder="you@example.com or username"
+                  placeholder={t('auth.identityPlaceholder')}
                   value={identity}
                   onChange={(e) => setIdentity(e.target.value)}
                   required
@@ -79,7 +82,7 @@ export default function Login() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -91,7 +94,7 @@ export default function Login() {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in…' : 'Sign in'}
+                {loading ? t('auth.signingIn') : t('auth.signIn')}
               </Button>
             </form>
           </CardContent>
@@ -99,11 +102,12 @@ export default function Login() {
         </Card>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
+          {t('auth.noAccount')}{' '}
           <Link to="/register" className="text-primary hover:underline font-medium">
-            Create one
+            {t('auth.createOne')}
           </Link>
         </p>
+        <LanguageSwitch />
       </div>
     </div>
   )

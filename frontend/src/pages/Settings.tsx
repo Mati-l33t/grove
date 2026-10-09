@@ -1,6 +1,9 @@
 import { useRef, useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Trans, useTranslation } from 'react-i18next'
+import type { ParseKeys } from 'i18next'
+import { LANGUAGES, applyLanguagePreference } from '@/lib/i18n'
 import { Bell, BellOff, Camera, Copy, LogOut, Users } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 import pb from '@/lib/pb'
@@ -18,22 +21,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import type { NotificationPrefs, User } from '@/types'
 
-const PUSH_NOTIF_ITEMS: { key: keyof NotificationPrefs; label: string; description: string }[] = [
-  { key: 'push_event_assigned',    label: 'Event shared with you',          description: 'When another member adds you to an event' },
-  { key: 'push_list_assigned',     label: 'List assigned to you',           description: 'When a to-do or shopping list is assigned to you' },
-  { key: 'push_list_item_added',   label: 'Item added to your list',        description: 'When someone adds an item to a list assigned to you' },
-  { key: 'push_recipe_shared',     label: 'Recipe shared with household',   description: 'When a new recipe is added to your household' },
-  { key: 'push_school_lunch',      label: 'School lunch added',             description: "When a lunch menu is added for a child" },
-  { key: 'push_school_assignment', label: 'School assignment added',        description: "When a new assignment is added for a child" },
+type NotifItem = { key: keyof NotificationPrefs; label: ParseKeys; description: ParseKeys }
+
+const PUSH_NOTIF_ITEMS: NotifItem[] = [
+  { key: 'push_event_assigned',    label: 'settings.notif.eventAssigned',    description: 'settings.notif.eventAssignedDesc' },
+  { key: 'push_list_assigned',     label: 'settings.notif.listAssigned',     description: 'settings.notif.listAssignedDesc' },
+  { key: 'push_list_item_added',   label: 'settings.notif.listItemAdded',    description: 'settings.notif.listItemAddedDesc' },
+  { key: 'push_recipe_shared',     label: 'settings.notif.recipeShared',     description: 'settings.notif.recipeSharedDesc' },
+  { key: 'push_school_lunch',      label: 'settings.notif.schoolLunch',      description: 'settings.notif.schoolLunchDesc' },
+  { key: 'push_school_assignment', label: 'settings.notif.schoolAssignment', description: 'settings.notif.schoolAssignmentDesc' },
 ]
 
-const EMAIL_NOTIF_ITEMS: { key: keyof NotificationPrefs; label: string }[] = [
-  { key: 'email_event_assigned',    label: 'Event shared with you' },
-  { key: 'email_list_assigned',     label: 'List assigned to you' },
-  { key: 'email_list_item_added',   label: 'Item added to your list' },
-  { key: 'email_recipe_shared',     label: 'Recipe shared with household' },
-  { key: 'email_school_lunch',      label: 'School lunch added' },
-  { key: 'email_school_assignment', label: 'School assignment added' },
+const EMAIL_NOTIF_ITEMS: { key: keyof NotificationPrefs; label: ParseKeys }[] = [
+  { key: 'email_event_assigned',    label: 'settings.notif.eventAssigned' },
+  { key: 'email_list_assigned',     label: 'settings.notif.listAssigned' },
+  { key: 'email_list_item_added',   label: 'settings.notif.listItemAdded' },
+  { key: 'email_recipe_shared',     label: 'settings.notif.recipeShared' },
+  { key: 'email_school_lunch',      label: 'settings.notif.schoolLunch' },
+  { key: 'email_school_assignment', label: 'settings.notif.schoolAssignment' },
 ]
 
 function defaultPrefs(saved: NotificationPrefs | undefined): NotificationPrefs {
@@ -59,6 +64,7 @@ function tabFromPath(pathname: string): string {
 }
 
 export default function Settings() {
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const { user, household, setUser, setHousehold, logout } = useAuthStore()
@@ -72,6 +78,7 @@ export default function Settings() {
   const [selectedColor, setSelectedColor] = useState(user?.color ?? MEMBER_COLORS[0])
   const [timeFormat, setTimeFormat] = useState<'auto' | '12h' | '24h'>(user?.time_format ?? 'auto')
   const [weekStart, setWeekStart] = useState<'monday' | 'sunday'>(user?.week_start ?? 'monday')
+  const [language, setLanguage] = useState<string>(user?.language ?? '')
   const [showWeather, setShowWeather] = useState(user?.show_weather ?? false)
   const [weatherUnit, setWeatherUnit] = useState<'celsius' | 'fahrenheit'>(user?.weather_unit ?? 'celsius')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -113,6 +120,7 @@ export default function Settings() {
       if (timeFormat !== 'auto') formData.append('time_format', timeFormat)
       else formData.append('time_format', '')
       formData.append('week_start', weekStart)
+      formData.append('language', language)
       formData.append('show_weather', String(showWeather))
       formData.append('weather_unit', weatherUnit)
       if (avatarFile) formData.append('avatar', avatarFile)
@@ -122,11 +130,12 @@ export default function Settings() {
       const updatedUser = updated as unknown as User
       setUser(updatedUser)
       setUsername(updatedUser.username ?? '')
+      applyLanguagePreference(updatedUser.language)
       setAvatarFile(null)
       setAvatarPreview(null)
-      toast.success('Profile saved.')
+      toast.success(t('settings.toast.profileSaved'))
     } catch {
-      toast.error('Failed to save profile. Please try again.')
+      toast.error(t('settings.toast.profileFailed'))
     } finally {
       setSaving(false)
     }
@@ -139,9 +148,9 @@ export default function Settings() {
       const updated = await pb.collection('users').update(user.id, { notification_prefs: prefs })
       pb.authStore.save(pb.authStore.token!, updated)
       setUser(updated as unknown as User)
-      toast.success('Notification settings saved.')
+      toast.success(t('settings.toast.prefsSaved'))
     } catch {
-      toast.error('Failed to save notification settings.')
+      toast.error(t('settings.toast.prefsFailed'))
     } finally {
       setSavingPrefs(false)
     }
@@ -151,9 +160,9 @@ export default function Settings() {
     setLeavingHousehold(true)
     try {
       await leaveHousehold()
-      toast.success('Left household.')
+      toast.success(t('settings.toast.leftHousehold'))
     } catch {
-      toast.error('Failed to leave household.')
+      toast.error(t('settings.toast.leaveFailed'))
     } finally {
       setLeavingHousehold(false)
     }
@@ -162,7 +171,7 @@ export default function Settings() {
   function copyInviteCode() {
     if (!household?.invite_code) return
     navigator.clipboard.writeText(household.invite_code)
-    toast.success('Invite code copied!')
+    toast.success(t('settings.toast.inviteCopied'))
   }
 
   function setPref(key: keyof NotificationPrefs, value: boolean) {
@@ -181,7 +190,7 @@ export default function Settings() {
 
   return (
     <>
-      <TopBar title="Settings" />
+      <TopBar title={t('settings.title')} />
 
       <div className="max-w-5xl mx-auto p-4 md:px-8 space-y-6">
         <Tabs
@@ -192,8 +201,8 @@ export default function Settings() {
           }}
         >
           <TabsList>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="profile">{t('settings.tabProfile')}</TabsTrigger>
+            <TabsTrigger value="notifications">{t('settings.tabNotifications')}</TabsTrigger>
           </TabsList>
 
           {/* ── Profile tab ── */}
@@ -207,7 +216,7 @@ export default function Settings() {
                     type="button"
                     className="relative group focus:outline-none shrink-0"
                     onClick={() => fileRef.current?.click()}
-                    aria-label="Change avatar"
+                    aria-label={t('settings.changeAvatar')}
                   >
                     <Avatar className="h-14 w-14">
                       {avatarUrl && <AvatarImage src={avatarUrl} alt={user?.name} />}
@@ -232,31 +241,31 @@ export default function Settings() {
                   {/* Left col */}
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <Label htmlFor="profile-name">Name</Label>
+                      <Label htmlFor="profile-name">{t('settings.name')}</Label>
                       <Input
                         id="profile-name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
+                        placeholder={t('settings.namePlaceholder')}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="profile-username">Login username</Label>
+                      <Label htmlFor="profile-username">{t('settings.username')}</Label>
                       <Input
                         id="profile-username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        placeholder="your.username"
+                        placeholder={t('settings.usernamePlaceholder')}
                         autoComplete="username"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Time format</Label>
+                      <Label>{t('settings.timeFormat')}</Label>
                       <div className="flex gap-2">
                         {([
-                          { key: 'auto', label: 'Auto' },
+                          { key: 'auto', label: t('common.auto') },
                           { key: '24h',  label: '24h'  },
                           { key: '12h',  label: '12h'  },
                         ] as const).map(({ key, label }) => (
@@ -274,15 +283,36 @@ export default function Settings() {
                           </button>
                         ))}
                       </div>
-                      <p className="text-xs text-muted-foreground">Auto follows your browser locale.</p>
+                      <p className="text-xs text-muted-foreground">{t('settings.timeFormatHint')}</p>
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Week starts on</Label>
+                      <Label>{t('settings.language')}</Label>
+                      <div className="flex gap-2 flex-wrap">
+                        {[{ key: '', label: t('common.auto') }, ...LANGUAGES.map((l) => ({ key: l.code as string, label: l.label }))].map(({ key, label }) => (
+                          <button
+                            key={key || 'auto'}
+                            type="button"
+                            onClick={() => setLanguage(key)}
+                            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                              language === key
+                                ? 'bg-primary/10 text-primary border-primary/40'
+                                : 'border-input text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{t('settings.languageHint')}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>{t('settings.weekStartsOn')}</Label>
                       <div className="flex gap-2">
                         {([
-                          { key: 'monday', label: 'Monday' },
-                          { key: 'sunday', label: 'Sunday' },
+                          { key: 'monday', label: t('settings.monday') },
+                          { key: 'sunday', label: t('settings.sunday') },
                         ] as const).map(({ key, label }) => (
                           <button
                             key={key}
@@ -304,7 +334,7 @@ export default function Settings() {
                   {/* Right col */}
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <Label>Calendar color</Label>
+                      <Label>{t('settings.calendarColor')}</Label>
                       <div className="flex gap-2 flex-wrap">
                         {MEMBER_COLORS.map((color) => (
                           <button
@@ -324,7 +354,7 @@ export default function Settings() {
                     </div>
 
                     <div className="space-y-3">
-                      <Label>Weather on Today page</Label>
+                      <Label>{t('settings.weatherOnToday')}</Label>
                       <label className="flex items-center gap-2 cursor-pointer select-none">
                         <input
                           type="checkbox"
@@ -332,16 +362,16 @@ export default function Settings() {
                           onChange={(e) => setShowWeather(e.target.checked)}
                           className="h-4 w-4 accent-primary cursor-pointer rounded"
                         />
-                        <span className="text-sm">Show current weather</span>
+                        <span className="text-sm">{t('settings.showWeather')}</span>
                       </label>
                       <p className="text-xs text-muted-foreground">
-                        Uses your browser's location if permission is granted, otherwise falls back to approximate IP-based location.
+                        {t('settings.weatherHint')}
                       </p>
                       {showWeather && (
                         <div className="flex gap-2">
                           {([
-                            { key: 'celsius'    as const, label: '°C — Celsius'    },
-                            { key: 'fahrenheit' as const, label: '°F — Fahrenheit' },
+                            { key: 'celsius'    as const, label: t('settings.celsius') },
+                            { key: 'fahrenheit' as const, label: t('settings.fahrenheit') },
                           ]).map(({ key, label }) => (
                             <button
                               key={key}
@@ -375,11 +405,11 @@ export default function Settings() {
                           <code className="text-sm font-mono font-bold tracking-widest text-primary">
                             {household.invite_code}
                           </code>
-                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={copyInviteCode} aria-label="Copy invite code">
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={copyInviteCode} aria-label={t('settings.copyInviteCode')}>
                             <Copy className="h-3.5 w-3.5" />
                           </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground">Share this code so others can join.</p>
+                        <p className="text-xs text-muted-foreground">{t('settings.shareCodeHint')}</p>
                       </div>
                     </div>
                     <Button
@@ -389,7 +419,7 @@ export default function Settings() {
                       onClick={handleLeaveHousehold}
                       disabled={leavingHousehold}
                     >
-                      {leavingHousehold ? 'Leaving…' : 'Leave household'}
+                      {leavingHousehold ? t('settings.leaving') : t('settings.leaveHousehold')}
                     </Button>
                   </div>
                 ) : (
@@ -397,14 +427,14 @@ export default function Settings() {
                     <div className="flex items-center gap-3">
                       <Users className="h-5 w-5 text-muted-foreground shrink-0" />
                       <div>
-                        <p className="text-sm font-medium">No household</p>
+                        <p className="text-sm font-medium">{t('settings.noHousehold')}</p>
                         <p className="text-xs text-muted-foreground">
-                          Create or join a household to share calendars, lists, and recipes.
+                          {t('settings.noHouseholdHint')}
                         </p>
                       </div>
                     </div>
                     <Button size="sm" className="shrink-0" onClick={() => setShowHouseholdSetup(true)}>
-                      Set up household
+                      {t('settings.setUpHousehold')}
                     </Button>
                   </div>
                 )}
@@ -414,7 +444,7 @@ export default function Settings() {
 
                 <div className="flex items-center justify-between">
                   <Button onClick={handleSaveProfile} disabled={saving || !name.trim()}>
-                    {saving ? 'Saving…' : 'Save changes'}
+                    {saving ? t('common.saving') : t('settings.saveChanges')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -422,7 +452,7 @@ export default function Settings() {
                     onClick={() => { logout(); navigate('/login') }}
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
+                    {t('settings.signOut')}
                   </Button>
                 </div>
 
@@ -439,43 +469,43 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <Bell className="h-4 w-4" />
-                    Push notifications
+                    {t('settings.pushNotifications')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {!notifSupported ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <BellOff className="h-4 w-4 shrink-0" />
-                      Not supported in this browser.
+                      {t('settings.pushUnsupported')}
                     </div>
                   ) : notifPermission === 'denied' ? (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <BellOff className="h-4 w-4 shrink-0" />
-                      Blocked in browser settings. Open your browser's site settings to allow notifications.
+                      {t('settings.pushBlocked')}
                     </div>
                   ) : notifPermission !== 'granted' ? (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
-                        Enable push notifications to receive alerts even when Grove is closed.
+                        {t('settings.pushEnableHint')}
                       </p>
                       <Button
                         variant="outline"
                         className="gap-2"
                         onClick={async () => {
                           const result = await requestPermission()
-                          if (result === 'denied') toast.error('Notifications blocked. Allow them in browser settings.')
-                          else if (result === 'granted') toast.success('Push notifications enabled!')
+                          if (result === 'denied') toast.error(t('settings.toast.pushDenied'))
+                          else if (result === 'granted') toast.success(t('settings.toast.pushOn'))
                         }}
                       >
                         <Bell className="h-4 w-4" />
-                        Enable push notifications
+                        {t('settings.enablePush')}
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 text-sm text-primary mb-1">
                         <div className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                        Push notifications are enabled
+                        {t('settings.pushEnabled')}
                       </div>
                       <div className="space-y-2">
                         {PUSH_NOTIF_ITEMS.map(({ key, label, description }) => (
@@ -487,8 +517,8 @@ export default function Settings() {
                               className="mt-0.5 h-4 w-4 accent-primary cursor-pointer rounded shrink-0"
                             />
                             <div>
-                              <span className="text-sm font-medium">{label}</span>
-                              <p className="text-xs text-muted-foreground">{description}</p>
+                              <span className="text-sm font-medium">{t(label)}</span>
+                              <p className="text-xs text-muted-foreground">{t(description)}</p>
                             </div>
                           </label>
                         ))}
@@ -501,12 +531,15 @@ export default function Settings() {
               {/* Email notifications — right */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Email notifications</CardTitle>
+                  <CardTitle className="text-base">{t('settings.emailNotifications')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-xs text-muted-foreground">
-                    Sent to <span className="font-medium text-foreground">{user?.email}</span>.
-                    Requires SMTP to be configured by an admin.
+                    <Trans
+                      i18nKey="settings.emailSentTo"
+                      values={{ email: user?.email }}
+                      components={{ 1: <span className="font-medium text-foreground" /> }}
+                    />
                   </p>
                   <div className="space-y-2">
                     {EMAIL_NOTIF_ITEMS.map(({ key, label }) => (
@@ -517,7 +550,7 @@ export default function Settings() {
                           onChange={(e) => setPref(key, e.target.checked)}
                           className="h-4 w-4 accent-primary cursor-pointer rounded shrink-0"
                         />
-                        <span className="text-sm">{label}</span>
+                        <span className="text-sm">{t(label)}</span>
                       </label>
                     ))}
                   </div>
@@ -527,7 +560,7 @@ export default function Settings() {
             </div>
 
             <Button onClick={handleSavePrefs} disabled={savingPrefs}>
-              {savingPrefs ? 'Saving…' : 'Save notification settings'}
+              {savingPrefs ? t('common.saving') : t('settings.saveNotifications')}
             </Button>
           </TabsContent>
         </Tabs>

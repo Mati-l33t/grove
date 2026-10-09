@@ -1,21 +1,26 @@
 import { NavLink } from 'react-router-dom'
 import { Home, Calendar, List, BookOpen, Utensils, Settings, Bot } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import type { ParseKeys } from 'i18next'
 import { cn } from '@/lib/utils'
 import { useAiModels } from '@/hooks/useChat'
 
-const baseItems = [
-  { to: '/',          icon: Home,      label: 'Today' },
-  { to: '/calendar',  icon: Calendar,  label: 'Calendar' },
-  { to: '/lists',     icon: List,      label: 'Lists' },
-  { to: '/recipes',   icon: BookOpen,  label: 'Recipes' },
-  { to: '/meal-plan', icon: Utensils,  label: 'Meals' },
+type NavEntry = { to: string; icon: React.ElementType; label: ParseKeys }
+
+const baseItems: NavEntry[] = [
+  { to: '/',          icon: Home,      label: 'nav.today' },
+  { to: '/calendar',  icon: Calendar,  label: 'nav.calendar' },
+  { to: '/lists',     icon: List,      label: 'nav.lists' },
+  { to: '/recipes',   icon: BookOpen,  label: 'nav.recipes' },
+  { to: '/meal-plan', icon: Utensils,  label: 'nav.meals' },
 ]
 
-const chatItem = { to: '/chat', icon: Bot, label: 'Assistant' }
+const chatItem: NavEntry = { to: '/chat', icon: Bot, label: 'nav.assistant' }
 
-const settingsItem = { to: '/settings', icon: Settings, label: 'Settings' }
+const settingsItem: NavEntry = { to: '/settings', icon: Settings, label: 'nav.settings' }
 
 export default function BottomNav() {
+  const { t } = useTranslation()
   const { data: aiData } = useAiModels()
 
   const items = aiData?.enabled
@@ -37,7 +42,7 @@ export default function BottomNav() {
           }
         >
           <Icon className="h-5 w-5" />
-          {label}
+          {t(label)}
         </NavLink>
       ))}
     </nav>

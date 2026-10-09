@@ -4,6 +4,8 @@ import {
   Home, Calendar, List, BookOpen, Utensils, Settings, ShieldCheck, Users, Bot, GraduationCap,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import type { ParseKeys } from 'i18next'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import { useDrawerStore } from '@/stores/drawerStore'
@@ -12,19 +14,20 @@ import { useAiModels } from '@/hooks/useChat'
 import ThemeToggle from './ThemeToggle'
 import AppLogo from './AppLogo'
 
-const mainNav = [
-  { to: '/',          icon: Home,     label: 'Today' },
-  { to: '/calendar',  icon: Calendar, label: 'Calendar' },
-  { to: '/lists',     icon: List,     label: 'Lists' },
-  { to: '/recipes',   icon: BookOpen, label: 'Recipes' },
-  { to: '/meal-plan', icon: Utensils, label: 'Meal Plan' },
+const mainNav: { to: string; icon: React.ElementType; label: ParseKeys }[] = [
+  { to: '/',          icon: Home,     label: 'nav.today' },
+  { to: '/calendar',  icon: Calendar, label: 'nav.calendar' },
+  { to: '/lists',     icon: List,     label: 'nav.lists' },
+  { to: '/recipes',   icon: BookOpen, label: 'nav.recipes' },
+  { to: '/meal-plan', icon: Utensils, label: 'nav.mealPlan' },
 ]
 
 function NavItem({
   to, icon: Icon, label, end, badge,
 }: {
-  to: string; icon: React.ElementType; label: string; end?: boolean; badge?: boolean
+  to: string; icon: React.ElementType; label: ParseKeys; end?: boolean; badge?: boolean
 }) {
+  const { t } = useTranslation()
   const setOpen = useDrawerStore((s) => s.setOpen)
   return (
     <NavLink
@@ -46,12 +49,13 @@ function NavItem({
           <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-orange-500" />
         )}
       </span>
-      <span className="truncate">{label}</span>
+      <span className="truncate">{t(label)}</span>
     </NavLink>
   )
 }
 
 export default function Sidebar() {
+  const { t } = useTranslation()
   const user = useAuthStore((s) => s.user)
   const { data: appSettings } = useInstanceSettings()
   const { data: aiData } = useAiModels()
@@ -66,11 +70,11 @@ export default function Sidebar() {
     if (!isAdmin || !hasUpdate) return
     if (sessionStorage.getItem('grove-update-notified')) return
     sessionStorage.setItem('grove-update-notified', '1')
-    toast.info(`Grove ${updateInfo!.latest} is available`, {
-      description: 'Update in Admin → Settings',
+    toast.info(t('nav.updateAvailable', { version: updateInfo!.latest }), {
+      description: t('nav.updateHint'),
       duration: 10000,
     })
-  }, [isAdmin, hasUpdate, updateInfo])
+  }, [isAdmin, hasUpdate, updateInfo, t])
 
   return (
     <>
@@ -97,23 +101,23 @@ export default function Sidebar() {
             <NavItem key={item.to} {...item} end={item.to === '/'} />
           ))}
 
-          <NavItem to="/school" icon={GraduationCap} label="School" />
+          <NavItem to="/school" icon={GraduationCap} label="nav.school" />
 
           {user?.household && (
-            <NavItem to="/household" icon={Users} label="Household" />
+            <NavItem to="/household" icon={Users} label="nav.household" />
           )}
 
           {aiData?.enabled && (
-            <NavItem to="/chat" icon={Bot} label="Assistant" />
+            <NavItem to="/chat" icon={Bot} label="nav.assistant" />
           )}
 
           {user?.is_admin && (
-            <NavItem to="/admin" icon={ShieldCheck} label="Admin" badge={hasUpdate} />
+            <NavItem to="/admin" icon={ShieldCheck} label="nav.admin" badge={hasUpdate} />
           )}
         </nav>
 
         <div className="px-2 py-3 border-t border-border space-y-0.5">
-          <NavItem to="/settings" icon={Settings} label="Settings" />
+          <NavItem to="/settings" icon={Settings} label="nav.settings" />
           <div className="flex items-center justify-between px-3 py-1">
             <span className="text-xs text-muted-foreground truncate max-w-[120px]">
               {user?.name || user?.email || ''}

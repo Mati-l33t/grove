@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/authStore'
+import i18n, { languageTag } from '@/lib/i18n'
 
 function browserUses12Hour(): boolean {
   const sample = new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' }).format(new Date(2000, 0, 1, 13))
@@ -18,5 +19,5 @@ export function useWeekStart(): 0 | 1 {
 }
 
 export function formatTime(date: Date, hour12: boolean): string {
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12 })
+  return date.toLocaleTimeString(languageTag(i18n.resolvedLanguage ?? 'en'), { hour: 'numeric', minute: '2-digit', hour12 })
 }

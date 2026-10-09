@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Download, Share, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
 const DISMISS_KEY = 'grove-install-dismissed'
@@ -33,6 +34,7 @@ function isMobileViewport(): boolean {
 }
 
 export default function InstallPrompt() {
+  const { t } = useTranslation()
   const [prompt, setPrompt] = useState<DeferredPrompt | null>(null)
   const [ios, setIos] = useState(false)
   const [visible, setVisible] = useState(false)
@@ -86,23 +88,22 @@ export default function InstallPrompt() {
         <div className="flex items-start gap-3">
           <img src="/icons/icon-192.png" alt="Grove" className="h-10 w-10 rounded-xl flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm">Install Grove</p>
+            <p className="font-semibold text-sm">{t('install.title')}</p>
             {ios ? (
               <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                Tap <Share className="inline h-3.5 w-3.5 mx-0.5 -mt-0.5" /> at the bottom of your
-                screen, then{' '}
-                <span className="font-medium text-foreground">Add to Home Screen</span>.
+                {t('install.iosBefore')} <Share className="inline h-3.5 w-3.5 mx-0.5 -mt-0.5" /> {t('install.iosMiddle')}{' '}
+                <span className="font-medium text-foreground">{t('install.iosAction')}</span>.
               </p>
             ) : (
               <p className="text-xs text-muted-foreground mt-0.5">
-                Add to your home screen for quick access — no app store needed.
+                {t('install.hint')}
               </p>
             )}
           </div>
           <button
             onClick={dismiss}
             className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors mt-0.5"
-            aria-label="Dismiss"
+            aria-label={t('install.dismiss')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -111,11 +112,11 @@ export default function InstallPrompt() {
         {!ios && (
           <div className="flex gap-2 mt-3">
             <Button variant="outline" size="sm" className="flex-1" onClick={dismiss}>
-              Not now
+              {t('install.notNow')}
             </Button>
             <Button size="sm" className="flex-1 gap-1.5" onClick={install}>
               <Download className="h-3.5 w-3.5" />
-              Install
+              {t('install.install')}
             </Button>
           </div>
         )}
