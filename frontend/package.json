@@ -1,12 +1,13 @@
 {
   "name": "grove",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:locales": "node scripts/check-locales.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.1",

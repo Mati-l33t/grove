@@ -23,6 +23,7 @@ Keep your family organised with an app that runs on your own server. All data st
 - **AI assistant** — optional, connects to any OpenAI-compatible endpoint (Ollama, Groq, OpenAI, etc.)
 - **PWA** — installable on Android, iOS, tablet, and desktop
 - **Dark / light mode**
+- **Multiple languages** — English and French, chosen per user (see [Translations](#translations))
 - **Admin panel** — manage users, instance settings, and app updates
 
 ---
@@ -133,6 +134,28 @@ Requirements: `node` (v18+), `npm`, `curl`, `unzip`. The script installs any mis
 
 ---
 
+## Translations
+
+Grove detects your browser language and falls back to English. Each user can pick a language
+under **Settings → Profile → Language**. Emails and push notifications are sent in the language
+chosen there (English when set to Auto).
+
+Currently available: English (`en`) and French (`fr`).
+
+### Adding or improving a language
+
+1. Copy `frontend/src/locales/en.json` to `frontend/src/locales/<code>.json` and translate the values.
+   Keep the keys, `{{placeholders}}` and `<1>tags</1>` unchanged. Plural keys ending in `_one` / `_other`
+   need both forms (some languages need more — see the [CLDR plural rules](https://cldr.unicode.org/index/cldr-spec/plural-rules)).
+2. Register it in `frontend/src/lib/i18n.ts` (the `LANGUAGES` list and the `resources` object) and add its
+   date-fns locale in `frontend/src/lib/dateLocale.ts`.
+3. Add a matching block to `server-i18n.js` for reminder emails and push notifications.
+4. Run `cd frontend && npm run check:locales` to verify no keys or placeholders are missing, then `npm run build`.
+
+Missing strings fall back to English, so a partial translation is fine to start with.
+
+---
+
 ## Tech stack
 
 | Layer | Technology |
@@ -145,6 +168,7 @@ Requirements: `node` (v18+), `npm`, `curl`, `unzip`. The script installs any mis
 | Client state | Zustand |
 | Push notifications | Web Push (VAPID) |
 | PWA | vite-plugin-pwa |
+| Translations | i18next + react-i18next |
 
 ---
 

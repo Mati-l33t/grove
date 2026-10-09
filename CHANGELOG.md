@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.0] - 2026-10-09
+
+### Added
+- Multi-language support — the whole web interface is now translatable, with English and French included (the French translation is a first draft; corrections are welcome)
+- Language setting under Settings → Profile, defaulting to your browser language, plus a language switch on the sign-in and registration pages
+- Dates, month and weekday names, and times follow the selected language across the calendar, Today, meal plan and school pages
+- Reminder emails, push notifications, welcome emails and the mail-server test email are sent in each user's chosen language
+- `npm run check:locales` verifies translation files have matching keys and placeholders
+- Translations section in the README explaining how to add a language
+
+### Changed
+- Event reminders and notification emails now escape special characters in titles and names
+
+### Fixed
+- Meal plan and Household pages now respect the "Week starts on" setting instead of always starting on Monday
+
 ## [0.2.0] - 2026-06-01
 
 ### Added
@@ -30,5 +46,6 @@
 - Self-hosted on Proxmox LXC (Debian 12/13) or Docker
 - PocketBase 0.39 backend with SQLite
 
+[0.3.0]: https://github.com/Mati-l33t/grove/compare/v0.2.1...v0.3.0
 [0.2.0]: https://github.com/Mati-l33t/grove/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Mati-l33t/grove/releases/tag/v0.1.0
