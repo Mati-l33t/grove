@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Camera } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export default function UserEditModal({ open, mode, user, onClose }: Props) {
+  const { t } = useTranslation()
   const { user: currentUser } = useAuthStore()
   const createUser = useAdminCreateUser()
   const updateUser = useAdminUpdateUser()
@@ -92,17 +94,17 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
     try {
       if (mode === 'create') {
         if (password.length < 8) {
-          toast.error('Password must be at least 8 characters.')
+          toast.error(t('admin.userEdit.toast.passwordShort'))
           return
         }
         await createUser.mutateAsync({
           name: name.trim(), username: username.trim(), email: email.trim(), password,
           color, role, is_admin: isAdmin, permissions, household: household || null,
         })
-        toast.success('User created.')
+        toast.success(t('admin.userEdit.toast.created'))
       } else {
         if (newPassword && newPassword.length < 8) {
-          toast.error('New password must be at least 8 characters.')
+          toast.error(t('admin.userEdit.toast.newPasswordShort'))
           return
         }
         await updateUser.mutateAsync({
@@ -110,14 +112,14 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
           is_admin: isAdmin, permissions, household: household || null, avatar: avatarFile,
           newPassword: newPassword || undefined,
         })
-        toast.success('User updated.')
+        toast.success(t('admin.userEdit.toast.updated'))
       }
       onClose()
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'message' in err
         ? String((err as { message: unknown }).message)
         : null
-      toast.error(msg || (mode === 'create' ? 'Failed to create user.' : 'Failed to update user.'))
+      toast.error(msg || (mode === 'create' ? t('admin.userEdit.toast.createFailed') : t('admin.userEdit.toast.updateFailed')))
     }
   }
 
@@ -134,7 +136,7 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'New user' : 'Edit user'}</DialogTitle>
+          <DialogTitle>{mode === 'create' ? t('admin.userEdit.newUser') : t('admin.userEdit.editUser')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,7 +147,7 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
                 type="button"
                 className="relative group focus:outline-none"
                 onClick={() => fileRef.current?.click()}
-                aria-label="Change photo"
+                aria-label={t('admin.userEdit.changePhoto')}
               >
                 <Avatar className="h-16 w-16">
                   {avatarUrl && <AvatarImage src={avatarUrl} />}
@@ -158,8 +160,8 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
                 </span>
               </button>
               <div className="text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">{name || 'User'}</p>
-                <p>Click photo to change</p>
+                <p className="font-medium text-foreground">{name || t('admin.userEdit.userFallback')}</p>
+                <p>{t('admin.userEdit.clickPhoto')}</p>
               </div>
               <input
                 ref={fileRef}
@@ -172,7 +174,7 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="u-name">Name</Label>
+            <Label htmlFor="u-name">{t('admin.userEdit.name')}</Label>
             <Input
               id="u-name"
               value={name}
@@ -180,14 +182,14 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
                 setName(e.target.value)
                 if (!usernameEdited) setUsername(toUsername(e.target.value))
               }}
-              placeholder="Name"
+              placeholder={t('admin.userEdit.name')}
               autoFocus
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="u-username">Login username</Label>
+            <Label htmlFor="u-username">{t('admin.userEdit.username')}</Label>
             <Input
               id="u-username"
               value={username}
@@ -195,7 +197,7 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
                 setUsername(e.target.value)
                 setUsernameEdited(true)
               }}
-              placeholder="username"
+              placeholder={t('admin.userEdit.usernamePlaceholder')}
               autoComplete="off"
               required
             />
@@ -203,9 +205,9 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
 
           <div className="space-y-1.5">
             <Label htmlFor="u-email">
-              Email
+              {t('admin.userEdit.email')}
               {mode === 'create' && (
-                <span className="ml-1.5 text-xs font-normal text-muted-foreground">(optional)</span>
+                <span className="ml-1.5 text-xs font-normal text-muted-foreground">{t('admin.userEdit.optional')}</span>
               )}
             </Label>
             {mode === 'create' ? (
@@ -214,14 +216,14 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="user@example.com"
+                placeholder={t('admin.userEdit.emailPlaceholder')}
                 autoComplete="off"
               />
             ) : (
               <Input
                 id="u-email"
                 value={email}
-                placeholder="No email"
+                placeholder={t('admin.userEdit.noEmail')}
                 readOnly
                 className="text-muted-foreground cursor-default"
               />
@@ -230,13 +232,13 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
 
           {mode === 'create' && (
             <div className="space-y-1.5">
-              <Label htmlFor="u-password">Password</Label>
+              <Label htmlFor="u-password">{t('admin.userEdit.password')}</Label>
               <Input
                 id="u-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Min. 8 characters"
+                placeholder={t('admin.userEdit.passwordPlaceholder')}
                 autoComplete="new-password"
                 required
               />
@@ -246,22 +248,22 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
           {mode === 'edit' && (
             <div className="space-y-1.5">
               <Label htmlFor="u-newpassword">
-                New password
-                <span className="ml-1.5 text-xs font-normal text-muted-foreground">(optional)</span>
+                {t('admin.userEdit.newPassword')}
+                <span className="ml-1.5 text-xs font-normal text-muted-foreground">{t('admin.userEdit.optional')}</span>
               </Label>
               <Input
                 id="u-newpassword"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Leave blank to keep current"
+                placeholder={t('admin.userEdit.newPasswordPlaceholder')}
                 autoComplete="new-password"
               />
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label>Color</Label>
+            <Label>{t('admin.userEdit.color')}</Label>
             <div className="flex items-center gap-2 flex-wrap">
               {MEMBER_COLORS.map((c) => (
                 <button
@@ -282,14 +284,14 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
           </div>
 
           <div className="space-y-1.5">
-              <Label htmlFor="u-household">Household</Label>
+              <Label htmlFor="u-household">{t('admin.userEdit.household')}</Label>
               <select
                 id="u-household"
                 value={household}
                 onChange={(e) => setHousehold(e.target.value)}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="">— No household —</option>
+                <option value="">{t('admin.userEdit.noHousehold')}</option>
                 {households?.map((h) => (
                   <option key={h.id} value={h.id}>{h.name}</option>
                 ))}
@@ -297,33 +299,33 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
             </div>
 
           <div className="space-y-1.5">
-            <Label>Role</Label>
+            <Label>{t('admin.userEdit.role')}</Label>
             <div className="flex gap-2">
               {(['adult', 'child'] as const).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRole(r)}
-                  className={`rounded-full border px-3 py-1 text-sm capitalize transition-colors ${
+                  className={`rounded-full border px-3 py-1 text-sm transition-colors ${
                     role === r
                       ? 'bg-primary/10 text-primary border-primary/40'
                       : 'border-input text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {r}
+                  {r === 'adult' ? t('admin.userEdit.roleAdult') : t('admin.userEdit.roleChild')}
                 </button>
               ))}
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Permissions</Label>
+            <Label>{t('admin.userEdit.permissions')}</Label>
             <div className="space-y-1.5">
               {([
-                { key: 'events'    as const, label: 'Manage calendar events' },
-                { key: 'lists'     as const, label: 'Manage lists' },
-                { key: 'recipes'   as const, label: 'Manage recipes' },
-                { key: 'meal_plan' as const, label: 'Edit meal plan' },
+                { key: 'events'    as const, label: t('admin.userEdit.permEvents') },
+                { key: 'lists'     as const, label: t('admin.userEdit.permLists') },
+                { key: 'recipes'   as const, label: t('admin.userEdit.permRecipes') },
+                { key: 'meal_plan' as const, label: t('admin.userEdit.permMealPlan') },
               ]).map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
                   <input
@@ -346,16 +348,16 @@ export default function UserEditModal({ open, mode, user, onClose }: Props) {
               disabled={isSelf}
               className="h-4 w-4 accent-primary cursor-pointer rounded"
             />
-            <span className="text-sm font-medium">Admin</span>
+            <span className="text-sm font-medium">{t('admin.userEdit.admin')}</span>
             {isSelf && (
-              <span className="text-xs text-muted-foreground">(can't change your own)</span>
+              <span className="text-xs text-muted-foreground">{t('admin.userEdit.cantChangeOwn')}</span>
             )}
           </label>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-border">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={!name.trim() || !username.trim() || isPending}>
-              {isPending ? 'Saving…' : mode === 'create' ? 'Create' : 'Save'}
+              {isPending ? t('common.saving') : mode === 'create' ? t('admin.userEdit.create') : t('common.save')}
             </Button>
           </div>
         </form>

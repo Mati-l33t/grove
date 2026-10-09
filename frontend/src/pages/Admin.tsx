@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -60,6 +61,7 @@ function StatCard({
 }
 
 function HouseholdsCard() {
+  const { t } = useTranslation()
   const { data: households, isLoading } = useAdminHouseholds()
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
@@ -78,7 +80,7 @@ function HouseholdsCard() {
           ? <Skeleton className="h-7 w-14" />
           : <p className="text-2xl font-bold">{households?.length ?? 0}</p>
         }
-        <p className="text-sm text-muted-foreground">Households</p>
+        <p className="text-sm text-muted-foreground">{t('admin.stat.households')}</p>
         {!isLoading && households && households.length > 0 && (
           <div className="mt-1 space-y-1.5 border-t border-border pt-2">
             {households.map((h) => (
@@ -87,7 +89,7 @@ function HouseholdsCard() {
                 <button
                   onClick={() => copyCode(h.id, h.invite_code)}
                   className="flex items-center gap-1 self-start rounded bg-muted px-1.5 py-0.5 text-xs font-mono hover:bg-muted/70 transition-colors"
-                  title="Copy invite code"
+                  title={t('admin.copyInvite')}
                 >
                   {h.invite_code}
                   {copiedId === h.id
@@ -105,16 +107,17 @@ function HouseholdsCard() {
 }
 
 function DashboardPanel() {
+  const { t } = useTranslation()
   const { data: stats, isLoading } = useAdminStats()
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <StatCard icon={Users2}   label="Users"       value={stats?.users}       loading={isLoading} to="/admin/users" />
+        <StatCard icon={Users2}   label={t('admin.stat.users')} value={stats?.users}       loading={isLoading} to="/admin/users" />
         <HouseholdsCard />
-        <StatCard icon={Calendar} label="Events"      value={stats?.events}      loading={isLoading} to="/calendar" />
-        <StatCard icon={List}     label="Lists"       value={stats?.lists}       loading={isLoading} to="/lists" />
-        <StatCard icon={BookOpen} label="Recipes"     value={stats?.recipes}     loading={isLoading} to="/recipes" />
+        <StatCard icon={Calendar} label={t('admin.stat.events')} value={stats?.events}      loading={isLoading} to="/calendar" />
+        <StatCard icon={List}     label={t('admin.stat.lists')} value={stats?.lists}       loading={isLoading} to="/lists" />
+        <StatCard icon={BookOpen} label={t('admin.stat.recipes')} value={stats?.recipes}     loading={isLoading} to="/recipes" />
       </div>
     </div>
   )
@@ -123,6 +126,7 @@ function DashboardPanel() {
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 function UsersPanel() {
+  const { t } = useTranslation()
   const { user: currentUser } = useAuthStore()
   const deleteUser = useAdminDeleteUser()
 
@@ -143,10 +147,10 @@ function UsersPanel() {
   async function handleDelete(id: string) {
     try {
       await deleteUser.mutateAsync(id)
-      toast.success('User deleted.')
+      toast.success(t('admin.users.toast.deleted'))
       setDeletingId(null)
     } catch {
-      toast.error('Failed to delete user.')
+      toast.error(t('admin.users.toast.deleteFailed'))
     }
   }
 
@@ -156,7 +160,7 @@ function UsersPanel() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Search by name or email…"
+            placeholder={t('admin.users.search')}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-8"
@@ -164,7 +168,7 @@ function UsersPanel() {
         </div>
         <Button onClick={() => setShowCreate(true)} className="gap-2 shrink-0">
           <UserPlus className="h-4 w-4" />
-          New user
+          {t('admin.users.newUser')}
         </Button>
       </div>
 
@@ -175,7 +179,7 @@ function UsersPanel() {
           ))}
         </div>
       ) : data?.items.length === 0 ? (
-        <p className="text-center py-12 text-muted-foreground">No users found.</p>
+        <p className="text-center py-12 text-muted-foreground">{t('admin.users.none')}</p>
       ) : (
         <div className="space-y-2">
           {data?.items.map((u) => {
@@ -206,15 +210,15 @@ function UsersPanel() {
                       {u.is_admin && (
                         <Badge variant="secondary" className="text-xs gap-1 py-0 px-1.5">
                           <ShieldCheck className="h-3 w-3" />
-                          Admin
+                          {t('admin.users.adminBadge')}
                         </Badge>
                       )}
                       {u.role === 'child' && (
-                        <Badge variant="outline" className="text-xs py-0 px-1.5">Child</Badge>
+                        <Badge variant="outline" className="text-xs py-0 px-1.5">{t('admin.users.childBadge')}</Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate">
-                      {u.email?.endsWith('@grove.local') ? 'No email' : u.email}
+                      {u.email?.endsWith('@grove.local') ? t('admin.users.noEmail') : u.email}
                     </p>
                   </div>
 
@@ -223,22 +227,22 @@ function UsersPanel() {
                   </div>
 
                   <div className="hidden md:block text-xs text-muted-foreground shrink-0 tabular-nums">
-                    {format(new Date(u.created), 'MMM d, yyyy')}
+                    {format(new Date(u.created), t('formats.monthDayYear'))}
                   </div>
 
                   {isDeletingThis ? (
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-muted-foreground">Delete?</span>
+                      <span className="text-xs text-muted-foreground">{t('admin.users.deleteQ')}</span>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDelete(u.id)}
                         disabled={deleteUser.isPending}
                       >
-                        {deleteUser.isPending ? '…' : 'Yes'}
+                        {deleteUser.isPending ? '…' : t('admin.users.yes')}
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => setDeletingId(null)}>
-                        No
+                        {t('admin.users.no')}
                       </Button>
                     </div>
                   ) : (
@@ -248,7 +252,7 @@ function UsersPanel() {
                         variant="ghost"
                         className="h-8 w-8"
                         onClick={() => setEditTarget(u)}
-                        aria-label="Edit user"
+                        aria-label={t('admin.users.editUser')}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -258,7 +262,7 @@ function UsersPanel() {
                         className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => setDeletingId(u.id)}
                         disabled={isSelf}
-                        aria-label="Delete user"
+                        aria-label={t('admin.users.deleteUser')}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -279,10 +283,10 @@ function UsersPanel() {
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
           >
-            Previous
+            {t('admin.users.previous')}
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {data.totalPages}
+            {t('admin.users.page', { page, total: data.totalPages })}
           </span>
           <Button
             variant="outline"
@@ -290,7 +294,7 @@ function UsersPanel() {
             onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
             disabled={page >= data.totalPages}
           >
-            Next
+            {t('admin.users.next')}
           </Button>
         </div>
       )}
@@ -313,6 +317,7 @@ function UsersPanel() {
 // ─── AI settings ─────────────────────────────────────────────────────────────
 
 function AiSettingsCard() {
+  const { t } = useTranslation()
   const { data: ai, isLoading } = useAiSettings()
   const save = useSaveAiSettings()
   const [showKey, setShowKey] = useState(false)
@@ -342,9 +347,9 @@ function AiSettingsCard() {
         api_key: apiKey.trim(),
         default_model: defModel.trim(),
       })
-      toast.success('AI settings saved.')
+      toast.success(t('admin.ai.toast.saved'))
     } catch {
-      toast.error('Failed to save AI settings.')
+      toast.error(t('admin.ai.toast.saveFailed'))
     }
   }
 
@@ -353,16 +358,16 @@ function AiSettingsCard() {
     try {
       const res = await pb.send('/api/grove/ai-models', { method: 'GET' })
       if (res.enabled && res.models?.length > 0) {
-        toast.success(`Connected — ${res.models.length} model${res.models.length === 1 ? '' : 's'} available.`)
+        toast.success(t('admin.ai.toast.connected', { count: res.models.length }))
       } else if (res.enabled) {
-        toast.success('Connected. No models returned (check API URL and key).')
+        toast.success(t('admin.ai.toast.connectedNone'))
       } else {
-        toast.error('AI is disabled — save settings first.')
+        toast.error(t('admin.ai.toast.disabled'))
       }
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'message' in err
         ? String((err as { message: unknown }).message)
-        : 'Connection failed.'
+        : t('admin.ai.toast.connectionFailed')
       toast.error(msg)
     } finally {
       setTesting(false)
@@ -377,7 +382,7 @@ function AiSettingsCard() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Bot className="h-4 w-4" />
-            AI assistant
+            {t('admin.ai.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -388,13 +393,13 @@ function AiSettingsCard() {
               onChange={(e) => setEnabled(e.target.checked)}
               className="h-4 w-4 accent-primary cursor-pointer rounded"
             />
-            <span className="text-sm font-medium">Enable AI assistant</span>
+            <span className="text-sm font-medium">{t('admin.ai.enable')}</span>
           </label>
 
           {enabled && (
             <div className="space-y-3 pt-1">
               <div className="space-y-1.5">
-                <Label htmlFor="ai-url">API base URL</Label>
+                <Label htmlFor="ai-url">{t('admin.ai.apiUrl')}</Label>
                 <Input
                   id="ai-url"
                   value={apiUrl}
@@ -408,14 +413,14 @@ function AiSettingsCard() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="ai-key">API key</Label>
+                <Label htmlFor="ai-key">{t('admin.ai.apiKey')}</Label>
                 <div className="relative">
                   <Input
                     id="ai-key"
                     type={showKey ? 'text' : 'password'}
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Leave blank if not required"
+                    placeholder={t('admin.ai.keyPlaceholder')}
                     autoComplete="new-password"
                     className="pr-9"
                   />
@@ -423,7 +428,7 @@ function AiSettingsCard() {
                     type="button"
                     onClick={() => setShowKey((v) => !v)}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={showKey ? 'Hide key' : 'Show key'}
+                    aria-label={showKey ? t('admin.ai.hideKey') : t('admin.ai.showKey')}
                   >
                     {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -431,7 +436,7 @@ function AiSettingsCard() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="ai-model">Default model</Label>
+                <Label htmlFor="ai-model">{t('admin.ai.defaultModel')}</Label>
                 <Input
                   id="ai-model"
                   value={defModel}
@@ -440,7 +445,7 @@ function AiSettingsCard() {
                   autoComplete="off"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Users can switch models in the chat. This is the default.
+                  {t('admin.ai.modelHint')}
                 </p>
               </div>
             </div>
@@ -448,7 +453,7 @@ function AiSettingsCard() {
 
           <div className="flex gap-2">
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Saving…' : 'Save AI settings'}
+              {save.isPending ? t('common.saving') : t('admin.ai.save')}
             </Button>
             <Button
               type="button"
@@ -456,7 +461,7 @@ function AiSettingsCard() {
               disabled={!enabled || testing}
               onClick={handleTest}
             >
-              {testing ? 'Testing…' : 'Test connection'}
+              {testing ? t('admin.ai.testing') : t('admin.ai.test')}
             </Button>
           </div>
         </CardContent>
@@ -470,6 +475,7 @@ function AiSettingsCard() {
 const DOCKER_UPDATE_CMD = 'docker compose pull && docker compose up -d'
 
 function UpdateCard() {
+  const { t } = useTranslation()
   const { data: updateInfo, isLoading: checkLoading, refetch, isFetching } = useUpdateCheck()
   const { data: runtime, isLoading: runtimeLoading } = useGroveRuntime()
   const runUpdate = useRunUpdate()
@@ -493,18 +499,18 @@ function UpdateCard() {
       setUpdateStarted(true)
       startCountdown()
     } catch {
-      toast.error('Failed to start update.')
+      toast.error(t('admin.updates.toast.startFailed'))
     }
   }
 
   async function handleCheckForUpdates() {
     const result = await refetch()
     if (result.data?.hasUpdate) {
-      toast.info(`v${result.data.latest} is available`)
+      toast.info(t('admin.updates.toast.versionAvailable', { version: result.data.latest }))
     } else if (result.data) {
-      toast.success('You are on the latest version')
+      toast.success(t('admin.updates.toast.onLatest'))
     } else {
-      toast.error('Could not check for updates')
+      toast.error(t('admin.updates.toast.checkFailed'))
     }
   }
 
@@ -523,13 +529,13 @@ function UpdateCard() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <RefreshCw className="h-4 w-4" />
-          App updates
+          {t('admin.updates.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-sm flex-wrap">
-            <span className="text-muted-foreground">Installed</span>
+            <span className="text-muted-foreground">{t('admin.updates.installed')}</span>
             <Badge variant="outline">v{__APP_VERSION__}</Badge>
             {runtime === 'docker' && (
               <Badge variant="secondary" className="text-xs">Docker</Badge>
@@ -541,13 +547,13 @@ function UpdateCard() {
               className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
             >
               <ExternalLink className="h-3 w-3" />
-              Changelog
+              {t('admin.updates.changelog')}
             </a>
           </div>
           {!updateStarted && (
             <Button variant="outline" size="sm" onClick={handleCheckForUpdates} disabled={isFetching}>
               <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? 'animate-spin' : ''}`} />
-              {isFetching ? 'Checking…' : 'Check for updates'}
+              {isFetching ? t('admin.updates.checking') : t('admin.updates.check')}
             </Button>
           )}
         </div>
@@ -555,18 +561,18 @@ function UpdateCard() {
         {updateStarted ? (
           <div className="flex items-center gap-2 rounded-md bg-blue-500/10 border border-blue-500/20 px-3 py-2 text-sm text-blue-700 dark:text-blue-400">
             <RefreshCw className="h-4 w-4 shrink-0 animate-spin" />
-            <span>Update in progress — reloading in {secondsLeft}s…</span>
+            <span>{t('admin.updates.inProgress', { seconds: secondsLeft })}</span>
           </div>
         ) : updateInfo?.hasUpdate ? (
           <div className="space-y-3">
             <div className="flex items-start gap-2 rounded-md bg-orange-500/10 border border-orange-500/20 px-3 py-2 text-sm text-orange-700 dark:text-orange-400">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-              <span><span className="font-medium">v{updateInfo.latest}</span> is available</span>
+              <span><Trans i18nKey="admin.updates.available" values={{ version: updateInfo.latest }} components={{ 1: <span className="font-medium" /> }} /></span>
             </div>
 
             {runtime === 'docker' ? (
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Run this on your server to update:</p>
+                <p className="text-sm text-muted-foreground">{t('admin.updates.runOnServer')}</p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 rounded-md bg-muted px-3 py-2 text-xs font-mono">
                     {DOCKER_UPDATE_CMD}
@@ -579,21 +585,21 @@ function UpdateCard() {
             ) : (
               <div className="flex gap-2">
                 <Button onClick={handleUpdate} disabled={runUpdate.isPending}>
-                  {runUpdate.isPending ? 'Starting…' : 'Update now'}
+                  {runUpdate.isPending ? t('admin.updates.starting') : t('admin.updates.updateNow')}
                 </Button>
                 <Button variant="outline" asChild>
                   <a href={updateInfo.releaseUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-1.5" />
-                    Release notes
+                    {t('admin.updates.releaseNotes')}
                   </a>
                 </Button>
               </div>
             )}
           </div>
         ) : updateInfo ? (
-          <p className="text-sm text-muted-foreground">You're on the latest version.</p>
+          <p className="text-sm text-muted-foreground">{t('admin.updates.latest')}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">Could not check for updates.</p>
+          <p className="text-sm text-muted-foreground">{t('admin.updates.checkFailed')}</p>
         )}
       </CardContent>
     </Card>
@@ -603,6 +609,7 @@ function UpdateCard() {
 // ─── Holidays ────────────────────────────────────────────────────────────────
 
 function HolidaysCard() {
+  const { t } = useTranslation()
   const { data: settings, isLoading } = useInstanceSettings()
   const { data: availableCountries = [], isLoading: countriesLoading, isError: countriesError } = useNagerCountries()
   const saveHolidays = useSaveHolidaySettings()
@@ -645,23 +652,23 @@ function HolidaysCard() {
     e.preventDefault()
     try {
       await saveHolidays.mutateAsync({ id: settings?.id, holidays_enabled: enabled, holiday_countries: selectedCountries })
-      toast.success('Holiday settings saved.')
+      toast.success(t('admin.holidays.toast.saved'))
     } catch {
-      toast.error('Failed to save holiday settings.')
+      toast.error(t('admin.holidays.toast.saveFailed'))
     }
   }
 
   async function handleImport() {
-    if (!selectedCountries.length) { toast.error('Select at least one country first.'); return }
+    if (!selectedCountries.length) { toast.error(t('admin.holidays.toast.selectCountry')); return }
     try {
       const count = await importHolidays.mutateAsync({
         countries: selectedCountries,
         settingsId: settings?.id,
         holidaysEnabled: enabled,
       })
-      toast.success(`${count} holidays imported.`)
+      toast.success(t('admin.holidays.toast.imported', { count }))
     } catch {
-      toast.error('Failed to import holidays. Check your internet connection.')
+      toast.error(t('admin.holidays.toast.importFailed'))
     }
   }
 
@@ -673,7 +680,7 @@ function HolidaysCard() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Public holidays
+            {t('admin.holidays.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -684,13 +691,13 @@ function HolidaysCard() {
               onChange={(e) => setEnabled(e.target.checked)}
               className="h-4 w-4 accent-primary cursor-pointer rounded"
             />
-            <span className="text-sm font-medium">Show public holidays on calendar</span>
+            <span className="text-sm font-medium">{t('admin.holidays.show')}</span>
           </label>
 
           {enabled && (
             <div className="space-y-3 pt-1">
               <div className="space-y-2">
-                <Label>Countries</Label>
+                <Label>{t('admin.holidays.countries')}</Label>
 
                 {selectedCountries.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
@@ -704,7 +711,7 @@ function HolidaysCard() {
                           type="button"
                           onClick={() => removeCountry(code)}
                           className="hover:opacity-70"
-                          aria-label={`Remove ${countryName(code)}`}
+                          aria-label={t('admin.holidays.removeCountry', { name: countryName(code) })}
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -717,7 +724,7 @@ function HolidaysCard() {
                   <div className="border border-border rounded-md">
                     <div className="p-2 border-b border-border">
                       <Input
-                        placeholder="Search countries…"
+                        placeholder={t('admin.holidays.searchCountries')}
                         value={countrySearch}
                         onChange={(e) => setCountrySearch(e.target.value)}
                         autoFocus
@@ -726,13 +733,13 @@ function HolidaysCard() {
                     <ScrollArea className="h-48">
                       <div className="p-1">
                         {countriesLoading ? (
-                          <p className="text-xs text-muted-foreground p-2">Loading countries…</p>
+                          <p className="text-xs text-muted-foreground p-2">{t('admin.holidays.loadingCountries')}</p>
                         ) : countriesError ? (
                           <p className="text-xs text-muted-foreground p-2">
-                            Could not load country list. Check your internet connection.
+                            {t('admin.holidays.countriesError')}
                           </p>
                         ) : filteredCountries.length === 0 ? (
-                          <p className="text-xs text-muted-foreground p-2">No countries found.</p>
+                          <p className="text-xs text-muted-foreground p-2">{t('admin.holidays.noCountries')}</p>
                         ) : (
                           filteredCountries.map((c: NagerCountry) => (
                             <button
@@ -757,21 +764,21 @@ function HolidaysCard() {
                         size="sm"
                         onClick={() => { setShowPicker(false); setCountrySearch('') }}
                       >
-                        Done
+                        {t('admin.holidays.done')}
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <Button type="button" variant="outline" size="sm" onClick={() => setShowPicker(true)}>
                     <Plus className="h-3.5 w-3.5 mr-1.5" />
-                    Add country
+                    {t('admin.holidays.addCountry')}
                   </Button>
                 )}
               </div>
 
               {settings?.holidays_last_imported && (
                 <p className="text-xs text-muted-foreground">
-                  Last imported: {format(new Date(settings.holidays_last_imported.replace(' ', 'T')), 'MMM d, yyyy')}
+                  {t('admin.holidays.lastImported', { date: format(new Date(settings.holidays_last_imported.replace(' ', 'T')), t('formats.monthDayYear')) })}
                 </p>
               )}
             </div>
@@ -779,7 +786,7 @@ function HolidaysCard() {
 
           <div className="flex gap-2 flex-wrap">
             <Button type="submit" disabled={saveHolidays.isPending}>
-              {saveHolidays.isPending ? 'Saving…' : 'Save'}
+              {saveHolidays.isPending ? t('common.saving') : t('common.save')}
             </Button>
             {enabled && (
               <Button
@@ -788,7 +795,7 @@ function HolidaysCard() {
                 disabled={importHolidays.isPending || !selectedCountries.length}
                 onClick={handleImport}
               >
-                {importHolidays.isPending ? 'Importing…' : 'Import holidays'}
+                {importHolidays.isPending ? t('admin.holidays.importing') : t('admin.holidays.import')}
               </Button>
             )}
           </div>
@@ -801,6 +808,7 @@ function HolidaysCard() {
 // ─── Instance settings ────────────────────────────────────────────────────────
 
 function SettingsPanel() {
+  const { t } = useTranslation()
   const { data: settings, isLoading } = useInstanceSettings()
   const save = useSaveInstanceSettings()
   const uploadLogo = useUploadInstanceLogo()
@@ -821,9 +829,9 @@ function SettingsPanel() {
     if (!file || !settings?.id) return
     try {
       await uploadLogo.mutateAsync({ id: settings.id, file })
-      toast.success('Logo updated.')
+      toast.success(t('admin.instance.toast.logoUpdated'))
     } catch {
-      toast.error('Failed to upload logo.')
+      toast.error(t('admin.instance.toast.logoUploadFailed'))
     }
     e.target.value = ''
   }
@@ -832,9 +840,9 @@ function SettingsPanel() {
     if (!settings?.id || !settings.logo) return
     try {
       await removeLogo.mutateAsync({ id: settings.id, filename: settings.logo })
-      toast.success('Logo removed.')
+      toast.success(t('admin.instance.toast.logoRemoved'))
     } catch {
-      toast.error('Failed to remove logo.')
+      toast.error(t('admin.instance.toast.logoRemoveFailed'))
     }
   }
 
@@ -856,9 +864,9 @@ function SettingsPanel() {
         default_theme: theme,
       })
       applyTheme(theme)
-      toast.success('Settings saved.')
+      toast.success(t('admin.instance.toast.saved'))
     } catch {
-      toast.error('Failed to save settings.')
+      toast.error(t('admin.instance.toast.saveFailed'))
     }
   }
 
@@ -869,23 +877,23 @@ function SettingsPanel() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Instance settings</CardTitle>
+          <CardTitle className="text-base">{t('admin.instance.title')}</CardTitle>
         </CardHeader>
         <form onSubmit={handleSave}>
           <CardContent className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="app-name">App name</Label>
+              <Label htmlFor="app-name">{t('admin.instance.appName')}</Label>
               <Input
                 id="app-name"
                 value={appName}
                 onChange={(e) => setAppName(e.target.value)}
                 placeholder="Grove"
               />
-              <p className="text-xs text-muted-foreground">Shown in the sidebar header.</p>
+              <p className="text-xs text-muted-foreground">{t('admin.instance.appNameHint')}</p>
             </div>
 
             <div className="space-y-2">
-              <Label>Registration</Label>
+              <Label>{t('admin.instance.registration')}</Label>
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -893,48 +901,48 @@ function SettingsPanel() {
                   onChange={(e) => setRegOpen(e.target.checked)}
                   className="h-4 w-4 accent-primary cursor-pointer rounded"
                 />
-                <span className="text-sm">Allow new registrations</span>
+                <span className="text-sm">{t('admin.instance.allowRegistration')}</span>
               </label>
               {!regOpen && (
                 <div className="flex items-start gap-2 rounded-md bg-yellow-500/10 border border-yellow-500/20 px-3 py-2 text-xs text-yellow-700 dark:text-yellow-400">
                   <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  New users won't be able to register while this is off.
+                  {t('admin.instance.registrationOff')}
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label>Default theme</Label>
+              <Label>{t('admin.instance.defaultTheme')}</Label>
               <div className="flex gap-2">
-                {(['dark', 'light'] as const).map((t) => (
+                {(['dark', 'light'] as const).map((th) => (
                   <button
-                    key={t}
+                    key={th}
                     type="button"
-                    onClick={() => setTheme(t)}
-                    className={`rounded-full border px-3 py-1 text-sm capitalize transition-colors ${
-                      theme === t
+                    onClick={() => setTheme(th)}
+                    className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                      theme === th
                         ? 'bg-primary/10 text-primary border-primary/40'
                         : 'border-input text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    {t}
+                    {th === 'dark' ? t('admin.instance.themeDark') : t('admin.instance.themeLight')}
                   </button>
                 ))}
               </div>
             </div>
 
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Saving…' : 'Save settings'}
+              {save.isPending ? t('common.saving') : t('admin.instance.saveSettings')}
             </Button>
           </CardContent>
         </form>
 
         <div className="px-6 pb-6 space-y-2 border-t border-border pt-5">
-          <Label>Logo</Label>
+          <Label>{t('admin.instance.logo')}</Label>
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-lg border border-border flex items-center justify-center bg-muted overflow-hidden shrink-0">
               {logoUrl ? (
-                <img src={logoUrl} alt="App logo" className="h-full w-full object-contain p-1.5" />
+                <img src={logoUrl} alt={t('admin.instance.logoAlt')} className="h-full w-full object-contain p-1.5" />
               ) : (
                 <Leaf className="h-5 w-5 text-primary" />
               )}
@@ -948,7 +956,7 @@ function SettingsPanel() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadLogo.isPending}
                 >
-                  {uploadLogo.isPending ? 'Uploading…' : logoUrl ? 'Replace' : 'Upload logo'}
+                  {uploadLogo.isPending ? t('admin.instance.uploading') : logoUrl ? t('admin.instance.replace') : t('admin.instance.uploadLogo')}
                 </Button>
                 {logoUrl && (
                   <Button
@@ -959,11 +967,11 @@ function SettingsPanel() {
                     onClick={handleLogoRemove}
                     disabled={removeLogo.isPending}
                   >
-                    {removeLogo.isPending ? 'Removing…' : 'Remove'}
+                    {removeLogo.isPending ? t('admin.instance.removing') : t('admin.instance.remove')}
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">PNG, JPG, SVG or WebP.</p>
+              <p className="text-xs text-muted-foreground">{t('admin.instance.logoHint')}</p>
             </div>
           </div>
           <input
@@ -988,6 +996,7 @@ function SettingsPanel() {
 // ─── Mail settings ────────────────────────────────────────────────────────────
 
 function MailSettingsCard() {
+  const { t } = useTranslation()
   const { data: smtp, isLoading } = useSmtpSettings()
   const save = useSaveSmtpSettings()
   const [showPassword, setShowPassword] = useState(false)
@@ -1029,21 +1038,21 @@ function MailSettingsCard() {
         from_name: fromName.trim(),
         from_address: fromAddress.trim(),
       })
-      toast.success('Mail settings saved.')
+      toast.success(t('admin.mail.toast.saved'))
     } catch {
-      toast.error('Failed to save mail settings.')
+      toast.error(t('admin.mail.toast.saveFailed'))
     }
   }
 
   async function handleTest() {
     setTesting(true)
     try {
-      const res = await pb.send('/api/grove/test-email', { method: 'POST' })
-      toast.success(res.message || 'Test email sent.')
+      await pb.send('/api/grove/test-email', { method: 'POST' })
+      toast.success(t('admin.mail.toast.testSent', { email: useAuthStore.getState().user?.email ?? '' }))
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'message' in err
         ? String((err as { message: unknown }).message)
-        : 'Failed to send test email.'
+        : t('admin.mail.toast.testFailed')
       toast.error(msg)
     } finally {
       setTesting(false)
@@ -1058,7 +1067,7 @@ function MailSettingsCard() {
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Mail className="h-4 w-4" />
-            Mail server
+            {t('admin.mail.title')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1069,14 +1078,14 @@ function MailSettingsCard() {
               onChange={(e) => setEnabled(e.target.checked)}
               className="h-4 w-4 accent-primary cursor-pointer rounded"
             />
-            <span className="text-sm font-medium">Enable email notifications</span>
+            <span className="text-sm font-medium">{t('admin.mail.enable')}</span>
           </label>
 
           {enabled && (
             <div className="space-y-3 pt-1">
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-2 space-y-1.5">
-                  <Label htmlFor="smtp-host">Host</Label>
+                  <Label htmlFor="smtp-host">{t('admin.mail.host')}</Label>
                   <Input
                     id="smtp-host"
                     value={host}
@@ -1085,7 +1094,7 @@ function MailSettingsCard() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="smtp-port">Port</Label>
+                  <Label htmlFor="smtp-port">{t('admin.mail.port')}</Label>
                   <Input
                     id="smtp-port"
                     type="number"
@@ -1103,12 +1112,12 @@ function MailSettingsCard() {
                   onChange={(e) => setSecure(e.target.checked)}
                   className="h-4 w-4 accent-primary cursor-pointer rounded"
                 />
-                <span className="text-sm">SSL/TLS (port 465)</span>
-                <span className="text-xs text-muted-foreground ml-1">Uncheck for STARTTLS (port 587)</span>
+                <span className="text-sm">{t('admin.mail.ssl')}</span>
+                <span className="text-xs text-muted-foreground ml-1">{t('admin.mail.starttls')}</span>
               </label>
 
               <div className="space-y-1.5">
-                <Label htmlFor="smtp-user">Username</Label>
+                <Label htmlFor="smtp-user">{t('admin.mail.username')}</Label>
                 <Input
                   id="smtp-user"
                   value={username}
@@ -1119,14 +1128,14 @@ function MailSettingsCard() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="smtp-pass">Password</Label>
+                <Label htmlFor="smtp-pass">{t('admin.mail.password')}</Label>
                 <div className="relative">
                   <Input
                     id="smtp-pass"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="App password or SMTP password"
+                    placeholder={t('admin.mail.passwordPlaceholder')}
                     autoComplete="new-password"
                     className="pr-9"
                   />
@@ -1134,7 +1143,7 @@ function MailSettingsCard() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? t('admin.mail.hidePassword') : t('admin.mail.showPassword')}
                   >
                     {showPassword
                       ? <EyeOff className="h-4 w-4" />
@@ -1146,7 +1155,7 @@ function MailSettingsCard() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="smtp-from-name">From name</Label>
+                  <Label htmlFor="smtp-from-name">{t('admin.mail.fromName')}</Label>
                   <Input
                     id="smtp-from-name"
                     value={fromName}
@@ -1155,7 +1164,7 @@ function MailSettingsCard() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="smtp-from-addr">From address</Label>
+                  <Label htmlFor="smtp-from-addr">{t('admin.mail.fromAddress')}</Label>
                   <Input
                     id="smtp-from-addr"
                     type="email"
@@ -1170,7 +1179,7 @@ function MailSettingsCard() {
 
           <div className="flex gap-2">
             <Button type="submit" disabled={save.isPending}>
-              {save.isPending ? 'Saving…' : 'Save mail settings'}
+              {save.isPending ? t('common.saving') : t('admin.mail.save')}
             </Button>
             <Button
               type="button"
@@ -1178,7 +1187,7 @@ function MailSettingsCard() {
               disabled={!enabled || testing}
               onClick={handleTest}
             >
-              {testing ? 'Sending…' : 'Send test email'}
+              {testing ? t('admin.mail.sending') : t('admin.mail.sendTest')}
             </Button>
           </div>
         </CardContent>
