@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "nodemailer": "^8.0.10",
+    "nodemailer": "^10.0.16",
     "web-push": "^3.6.7"
   }
 }
