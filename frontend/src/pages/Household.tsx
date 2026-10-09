@@ -248,7 +248,7 @@ export default function HouseholdPage() {
                           const label = meal.expand?.recipe?.title || meal.custom_meal || '—'
                           return (
                             <div key={type} className="flex gap-2 text-xs px-2">
-                              <span className="text-muted-foreground capitalize w-16 flex-shrink-0">{type}</span>
+                              <span className="text-muted-foreground w-16 flex-shrink-0">{mealLabel(t, type)}</span>
                               <span className="truncate font-medium">{label}</span>
                             </div>
                           )

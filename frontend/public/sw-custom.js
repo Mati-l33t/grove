@@ -12,7 +12,8 @@ self.addEventListener('periodicsync', (event) => {
 })
 
 self.addEventListener('push', (event) => {
-    let data = { title: 'Grove', body: 'You have a reminder.', url: '/' }
+    const fr = (self.navigator.language || '').slice(0, 2) === 'fr'
+    let data = { title: 'Grove', body: fr ? 'Vous avez un rappel.' : 'You have a reminder.', url: '/' }
     try { Object.assign(data, JSON.parse(event.data.text())) } catch {}
     event.waitUntil(
         self.registration.showNotification(data.title, {

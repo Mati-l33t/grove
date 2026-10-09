@@ -1,3 +1,4 @@
+import i18n from '@/lib/i18n'
 import { createContext, useContext, useState, useEffect, useCallback, useRef, createElement } from 'react'
 import pb from '@/lib/pb'
 import { useAuthStore } from '@/stores/authStore'
@@ -123,7 +124,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           const isMyList = list.assigned_to === user.id
           if (!isHouseholdList && !isMyList) return
           if (!isPushEnabled(prefsRef.current, 'push_list_item_added')) return
-          showNotification(`New item in ${list.name}`, data.record.text)
+          showNotification(i18n.t('notify.newItemIn', { list: list.name }), data.record.text)
         } catch {}
       }).then((fn) => unsubs.push(fn)).catch(() => {})
     } else {
@@ -135,7 +136,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         try {
           const list = await pb.collection('lists').getOne(data.record.list)
           if (list.assigned_to !== user.id) return
-          showNotification(`New item in ${list.name}`, data.record.text)
+          showNotification(i18n.t('notify.newItemIn', { list: list.name }), data.record.text)
         } catch {}
       }).then((fn) => unsubs.push(fn)).catch(() => {})
     }
@@ -148,7 +149,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const sharedWith: string[] = Array.isArray(ev.shared_with) ? ev.shared_with : []
       if (!sharedWith.includes(user.id)) return
       if (!isPushEnabled(prefsRef.current, 'push_event_assigned')) return
-      showNotification(`New event: ${ev.title}`, ev.description || 'You were added to an event')
+      showNotification(i18n.t('notify.newEvent', { title: ev.title }), ev.description || i18n.t('notify.addedToEvent'))
     }).then((fn) => unsubs.push(fn)).catch(() => {})
 
     // List assigned to this user
@@ -158,7 +159,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       if (list.user === user.id) return
       if (list.assigned_to !== user.id) return
       if (!isPushEnabled(prefsRef.current, 'push_list_assigned')) return
-      showNotification(`List assigned to you`, list.name)
+      showNotification(i18n.t('notify.listAssigned'), list.name)
     }).then((fn) => unsubs.push(fn)).catch(() => {})
 
     // Recipe shared with household
@@ -169,7 +170,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         if (recipe.user === user.id) return
         if (recipe.household !== household.id) return
         if (!isPushEnabled(prefsRef.current, 'push_recipe_shared')) return
-        showNotification(`New recipe: ${recipe.title}`, 'Shared with your household')
+        showNotification(i18n.t('notify.newRecipe', { title: recipe.title }), i18n.t('notify.sharedWithHousehold'))
       }).then((fn) => unsubs.push(fn)).catch(() => {})
 
       // School: new lunch added
@@ -181,9 +182,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         if (!isPushEnabled(prefsRef.current, 'push_school_lunch')) return
         try {
           const child = await pb.collection('school_children').getOne(lunch.child)
-          showNotification(`Lunch added for ${child.name}`, lunch.meal)
+          showNotification(i18n.t('notify.lunchAddedFor', { child: child.name }), lunch.meal)
         } catch {
-          showNotification('New school lunch added', lunch.meal || '')
+          showNotification(i18n.t('notify.lunchAdded'), lunch.meal || '')
         }
       }).then((fn) => unsubs.push(fn)).catch(() => {})
 
@@ -197,11 +198,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         try {
           const child = await pb.collection('school_children').getOne(assignment.child)
           showNotification(
-            `New assignment for ${child.name}`,
+            i18n.t('notify.assignmentFor', { child: child.name }),
             `${assignment.subject}: ${assignment.title}`
           )
         } catch {
-          showNotification('New school assignment', `${assignment.subject}: ${assignment.title}`)
+          showNotification(i18n.t('notify.assignmentAdded'), `${assignment.subject}: ${assignment.title}`)
         }
       }).then((fn) => unsubs.push(fn)).catch(() => {})
     }

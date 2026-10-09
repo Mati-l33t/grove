@@ -4,11 +4,3 @@ export const MEMBER_COLORS = [
 ]
 
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const
-
-export const RECURRING_OPTIONS = [
-  { value: 'none',    label: 'Does not repeat' },
-  { value: 'daily',   label: 'Daily' },
-  { value: 'weekly',  label: 'Weekly' },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'yearly',  label: 'Yearly' },
-]

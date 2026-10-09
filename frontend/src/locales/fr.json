@@ -60,7 +60,7 @@
     "monday": "Lundi",
     "sunday": "Dimanche",
     "language": "Langue",
-    "languageHint": "Auto suit la langue de votre navigateur.",
+    "languageHint": "Auto suit la langue de votre navigateur. Les e-mails et notifications push utilisent la langue choisie ici (anglais si Auto).",
     "calendarColor": "Couleur du calendrier",
     "weatherOnToday": "Météo sur la page Aujourd'hui",
     "showWeather": "Afficher la météo actuelle",
@@ -823,5 +823,17 @@
       "long": "d MMMM",
       "lunchDay": "EEE d MMM"
     }
+  },
+  "notify": {
+    "newItemIn": "Nouvel élément dans {{list}}",
+    "newEvent": "Nouvel événement : {{title}}",
+    "addedToEvent": "Vous avez été ajouté à un événement",
+    "listAssigned": "Liste qui vous est attribuée",
+    "newRecipe": "Nouvelle recette : {{title}}",
+    "sharedWithHousehold": "Partagée avec votre foyer",
+    "lunchAddedFor": "Repas de cantine ajouté pour {{child}}",
+    "lunchAdded": "Nouveau repas de cantine ajouté",
+    "assignmentFor": "Nouveau devoir pour {{child}}",
+    "assignmentAdded": "Nouveau devoir"
   }
 }
