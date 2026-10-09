@@ -40,14 +40,22 @@ routerAdd("POST", "/api/grove/run-update", (c) => {
         return c.json(409, { runtime: "docker" })
     }
 
-    // pb_data is at <grove>/pb/pb_data, so the grove root is two levels up
-    const groveDir = $filepath.join($app.rootDir(), "..", "..")
-    const script = $filepath.join(groveDir, "update.sh")
+    // update.sh has to run as root (git pull, systemctl restart), but PocketBase runs as the
+    // unprivileged "grove" user. So instead of running the script from here, drop a trigger
+    // file: grove-update.path (root, installed by install.sh / update.sh) notices it and
+    // starts grove-update.service, which runs update.sh outside this service's process group
+    // so restarting grove.service doesn't kill the update.
+    try {
+        $os.stat("/etc/systemd/system/grove-update.path")
+    } catch (_) {
+        return c.json(409, {
+            code: "updater_not_installed",
+            message: "The automatic updater is not installed yet. Run /opt/grove/update.sh once as root.",
+        })
+    }
 
     try {
-        // nohup + & detaches the script so it keeps running after PocketBase
-        // restarts itself partway through the update
-        $os.exec("bash", "-c", "nohup " + script + " > /tmp/grove-update.log 2>&1 &")
+        $os.writeFile($filepath.join($app.dataDir(), ".update-requested"), String(Date.now()), 0o644)
     } catch (err) {
         return c.json(500, { message: "Failed to start update: " + String(err) })
     }

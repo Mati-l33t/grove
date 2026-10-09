@@ -607,7 +607,9 @@
         "versionAvailable": "v{{version}} is available",
         "onLatest": "You are on the latest version",
         "checkFailed": "Could not check for updates"
-      }
+      },
+      "setupNeeded": "Automatic updates need a one-time setup on this server. Run this command there as root:",
+      "setupHint": "After it finishes, the Update button works on its own. If you have just updated by hand, run it once more."
     },
     "holidays": {
       "title": "Public holidays",

@@ -30,6 +30,13 @@ git -C "$GROVE_DIR" clean -f -- pb/pb_migrations/
 # Pull latest code
 git -C "$GROVE_DIR" pull --ff-only
 
+# The pull may have replaced this very script. A running bash keeps executing the old
+# copy, so start the new one for the rest of the update (guarded against looping).
+if [ -z "$GROVE_UPDATE_REEXEC" ]; then
+    export GROVE_UPDATE_REEXEC=1
+    exec "$GROVE_DIR/update.sh"
+fi
+
 # Upgrade PocketBase binary if version changed
 CURRENT_PB=$("$GROVE_DIR/pb/pocketbase" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' | head -1 || echo "0")
 if [ "$CURRENT_PB" != "$PB_VERSION" ]; then
@@ -69,9 +76,13 @@ node "$GROVE_DIR/reminder.js" --setup
 # Deploy frontend (preserves vapid-public.txt since it's not in dist/)
 cp -r "$FRONTEND_DIR/dist/"* "$GROVE_DIR/pb/pb_public/"
 
-# Reload systemd unit files in case they changed
+# Reload systemd unit files in case they changed. grove-update.path is what lets the
+# admin panel's Update button run this script as root.
 cp "$GROVE_DIR/grove-reminder.service" /etc/systemd/system/grove-reminder.service
+cp "$GROVE_DIR/grove-update.service" /etc/systemd/system/grove-update.service
+cp "$GROVE_DIR/grove-update.path" /etc/systemd/system/grove-update.path
 systemctl daemon-reload
+systemctl enable --now grove-update.path >/dev/null 2>&1 || true
 
 # Restart services
 echo "==> Restarting services..."

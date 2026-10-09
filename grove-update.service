@@ -1,0 +1,15 @@
+[Unit]
+Description=Grove self-update
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Runs update.sh as root. Started by grove-update.path when the admin panel's
+# Update button creates the trigger file (see pb_hooks/main.pb.js).
+Type=oneshot
+User=root
+ExecStartPre=/bin/rm -f /opt/grove/pb/pb_data/.update-requested
+ExecStart=/opt/grove/update.sh
+TimeoutStartSec=30min
+StandardOutput=journal
+StandardError=journal

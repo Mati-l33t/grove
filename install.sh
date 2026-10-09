@@ -139,12 +139,15 @@ chmod 600 "$GROVE_DIR/vapid-keys.json"
 echo "==> Setting up systemd services..."
 cp "$GROVE_DIR/grove.service" /etc/systemd/system/grove.service
 cp "$GROVE_DIR/grove-reminder.service" /etc/systemd/system/grove-reminder.service
+cp "$GROVE_DIR/grove-update.service" /etc/systemd/system/grove-update.service
+cp "$GROVE_DIR/grove-update.path" /etc/systemd/system/grove-update.path
 
 systemctl daemon-reload
-systemctl enable grove.service grove-reminder.service
+systemctl enable grove.service grove-reminder.service grove-update.path
 systemctl restart grove.service
 sleep 2
 systemctl start grove-reminder.service
+systemctl start grove-update.path
 
 if [ "$NONINTERACTIVE" != "1" ]; then
     echo ""

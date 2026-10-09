@@ -473,6 +473,7 @@ function AiSettingsCard() {
 // ─── Updates ─────────────────────────────────────────────────────────────────
 
 const DOCKER_UPDATE_CMD = 'docker compose pull && docker compose up -d'
+const MANUAL_UPDATE_CMD = '/opt/grove/update.sh'
 
 function UpdateCard() {
   const { t } = useTranslation()
@@ -482,6 +483,7 @@ function UpdateCard() {
   const [updateStarted, setUpdateStarted] = useState(false)
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [copied, setCopied] = useState(false)
+  const [needsSetup, setNeedsSetup] = useState(false)
 
   const startCountdown = useCallback(() => {
     setSecondsLeft(45)
@@ -498,8 +500,11 @@ function UpdateCard() {
       await runUpdate.mutateAsync()
       setUpdateStarted(true)
       startCountdown()
-    } catch {
-      toast.error(t('admin.updates.toast.startFailed'))
+    } catch (err) {
+      // The server answers 409 until the root-side updater has been installed by update.sh
+      const code = (err as { response?: { code?: string } })?.response?.code
+      if (code === 'updater_not_installed') setNeedsSetup(true)
+      else toast.error(t('admin.updates.toast.startFailed'))
     }
   }
 
@@ -514,8 +519,8 @@ function UpdateCard() {
     }
   }
 
-  function copyDockerCmd() {
-    navigator.clipboard.writeText(DOCKER_UPDATE_CMD).then(() => {
+  function copyCmd(cmd: string) {
+    navigator.clipboard.writeText(cmd).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
@@ -577,22 +582,38 @@ function UpdateCard() {
                   <code className="flex-1 rounded-md bg-muted px-3 py-2 text-xs font-mono">
                     {DOCKER_UPDATE_CMD}
                   </code>
-                  <Button variant="outline" size="sm" onClick={copyDockerCmd} className="shrink-0">
+                  <Button variant="outline" size="sm" onClick={() => copyCmd(DOCKER_UPDATE_CMD)} className="shrink-0">
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <Button onClick={handleUpdate} disabled={runUpdate.isPending}>
-                  {runUpdate.isPending ? t('admin.updates.starting') : t('admin.updates.updateNow')}
-                </Button>
-                <Button variant="outline" asChild>
-                  <a href={updateInfo.releaseUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-1.5" />
-                    {t('admin.updates.releaseNotes')}
-                  </a>
-                </Button>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Button onClick={handleUpdate} disabled={runUpdate.isPending}>
+                    {runUpdate.isPending ? t('admin.updates.starting') : t('admin.updates.updateNow')}
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <a href={updateInfo.releaseUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-1.5" />
+                      {t('admin.updates.releaseNotes')}
+                    </a>
+                  </Button>
+                </div>
+                {needsSetup && (
+                  <div className="space-y-2 rounded-md bg-muted/50 border px-3 py-2">
+                    <p className="text-sm">{t('admin.updates.setupNeeded')}</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 rounded-md bg-muted px-3 py-2 text-xs font-mono">
+                        {MANUAL_UPDATE_CMD}
+                      </code>
+                      <Button variant="outline" size="sm" onClick={() => copyCmd(MANUAL_UPDATE_CMD)} className="shrink-0">
+                        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t('admin.updates.setupHint')}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

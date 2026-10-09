@@ -607,7 +607,9 @@
         "versionAvailable": "v{{version}} est disponible",
         "onLatest": "Vous avez la dernière version",
         "checkFailed": "Impossible de rechercher les mises à jour"
-      }
+      },
+      "setupNeeded": "Les mises à jour automatiques nécessitent une configuration unique sur ce serveur. Exécutez cette commande en tant que root :",
+      "setupHint": "Une fois terminée, le bouton de mise à jour fonctionnera seul. Si vous venez de mettre à jour à la main, relancez-la une fois."
     },
     "holidays": {
       "title": "Jours fériés",
