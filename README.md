@@ -105,11 +105,16 @@ Go to Settings to create or join a household and start sharing content with fami
 
 ## Updating
 
-**Proxmox LXC** — run inside the container, or click **Update** in the admin panel (Admin → Settings):
+**Proxmox LXC** — run this inside the container as root:
 
 ```bash
 /opt/grove/update.sh
 ```
+
+The **Update** button in the admin panel (Admin → Settings) does the same thing through a small
+root-owned systemd service (`grove-update`) that `update.sh` installs. If you are updating from
+v0.3.0 or older, run the command above **twice**: the first run brings in the new version and the
+second one sets up that service. From then on the button works on its own.
 
 **Docker:**
 

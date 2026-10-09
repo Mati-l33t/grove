@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.1] - 2026-10-09
+
+### Fixed
+- The **Update** button in Admin → Settings failed with "Failed to start update" on Proxmox LXC installs. It now works: the button asks a small root-owned systemd service (`grove-update`) to run `update.sh`, which previously could not run as the unprivileged `grove` user
+- If that service is not installed yet, the panel now says so and shows the command to run instead of a generic error
+- `update.sh` restarts itself after pulling, so changes to the script take effect in the same run
+
+### Upgrading
+- Installs on v0.3.0 or older need to run `/opt/grove/update.sh` once, and then once more, to install the updater service. After that the Update button works. Docker installs are unaffected
+
 ## [0.3.0] - 2026-10-09
 
 ### Added
@@ -48,6 +58,7 @@
 - Self-hosted on Proxmox LXC (Debian 12/13) or Docker
 - PocketBase 0.39 backend with SQLite
 
+[0.3.1]: https://github.com/Mati-l33t/grove/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Mati-l33t/grove/compare/v0.2.1...v0.3.0
 [0.2.0]: https://github.com/Mati-l33t/grove/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Mati-l33t/grove/releases/tag/v0.1.0
