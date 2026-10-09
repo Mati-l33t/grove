@@ -13,6 +13,7 @@
 ### Changed
 - Event reminders and notification emails now escape special characters in titles and names
 - Updated dependencies, including React Router (security fixes) and Nodemailer 10 (security fixes)
+- PocketBase updated from 0.39.0 to 0.39.11 (includes a security fix for an unhandled panic in background workers); `update.sh` upgrades the binary automatically
 
 ### Fixed
 - Meal plan and Household pages now respect the "Week starts on" setting instead of always starting on Monday

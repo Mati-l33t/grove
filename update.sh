@@ -3,7 +3,7 @@ set -e
 
 GROVE_DIR="$(cd "$(dirname "$0")" && pwd)"
 FRONTEND_DIR="$GROVE_DIR/frontend"
-PB_VERSION="0.39.0"
+PB_VERSION="0.39.11"
 
 echo "==> Updating Grove..."
 
