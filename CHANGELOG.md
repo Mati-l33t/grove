@@ -12,6 +12,7 @@
 
 ### Changed
 - Event reminders and notification emails now escape special characters in titles and names
+- Updated dependencies, including React Router (security fixes) and Nodemailer 10 (security fixes)
 
 ### Fixed
 - Meal plan and Household pages now respect the "Week starts on" setting instead of always starting on Monday
