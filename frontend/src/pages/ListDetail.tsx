@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Archive, ChevronDown, ChevronRight, Edit2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import TopBar from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +20,7 @@ import { cn, memberDisplayName } from '@/lib/utils'
 import type { ShareMode } from '@/types'
 
 export default function ListDetail() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
@@ -45,7 +47,7 @@ export default function ListDetail() {
 
   function getSharingLabel(): string | null {
     if (!list) return null
-    if (list.household) return 'Everyone'
+    if (list.household) return t('lists.everyone')
     if (list.shared_with?.length) {
       return list.shared_with
         .map((id) => members.find((m) => m.id === id)?.name?.split(' ')[0] || '?')
@@ -61,14 +63,14 @@ export default function ListDetail() {
     ?? members.find((m) => m.id === list?.user)?.name?.split(' ')[0]
 
   const assignedLabel = list?.assigned_to && list.assigned_to !== currentUser?.id
-    ? `For: ${assignedToName ?? '?'}`
+    ? t('scope.for', { names: assignedToName ?? '?' })
     : list?.assigned_to === currentUser?.id && list?.user !== currentUser?.id
-    ? `From: ${creatorName ?? '?'}`
+    ? t('scope.from', { name: creatorName ?? '?' })
     : null
   const unchecked = useMemo(() => items.filter((i) => !i.checked), [items])
   const checked = useMemo(() => items.filter((i) => i.checked), [items])
 
-  const title = list?.name ?? 'List'
+  const title = list?.name ?? t('lists.defaultTitle')
   const color = list?.color ?? '#22c55e'
 
   function openEdit() {
@@ -102,10 +104,10 @@ export default function ListDetail() {
           assignedTo: editAssignedTo || null,
         },
       })
-      toast.success('List updated.')
+      toast.success(t('lists.toast.updated'))
       setShowEdit(false)
     } catch {
-      toast.error('Failed to update list.')
+      toast.error(t('lists.toast.updateFailed'))
     }
   }
 
@@ -113,10 +115,10 @@ export default function ListDetail() {
     if (!id) return
     try {
       await archiveList.mutateAsync(id)
-      toast.success('List archived.')
+      toast.success(t('lists.toast.archived'))
       navigate('/lists')
     } catch {
-      toast.error('Failed to archive list.')
+      toast.error(t('lists.toast.archiveFailed'))
     }
   }
 
@@ -124,10 +126,10 @@ export default function ListDetail() {
     if (!id) return
     try {
       await deleteList.mutateAsync(id)
-      toast.success('List deleted.')
+      toast.success(t('lists.toast.deleted'))
       navigate('/lists')
     } catch {
-      toast.error('Failed to delete list.')
+      toast.error(t('lists.toast.deleteFailed'))
     }
   }
 
@@ -136,19 +138,19 @@ export default function ListDetail() {
       <div className="flex items-center gap-0.5">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={openEdit} aria-label="Edit list">
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={openEdit} aria-label={t('lists.editList')}>
               <Edit2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Edit</TooltipContent>
+          <TooltipContent>{t('common.edit')}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleArchive} aria-label="Archive list">
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleArchive} aria-label={t('lists.archiveList')}>
               <Archive className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Archive</TooltipContent>
+          <TooltipContent>{t('lists.archive')}</TooltipContent>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -157,12 +159,12 @@ export default function ListDetail() {
               variant="ghost"
               className="h-8 w-8 hover:text-destructive"
               onClick={() => setShowDeleteConfirm(true)}
-              aria-label="Delete list"
+              aria-label={t('lists.deleteList')}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Delete</TooltipContent>
+          <TooltipContent>{t('common.delete')}</TooltipContent>
         </Tooltip>
       </div>
     </TooltipProvider>
@@ -183,7 +185,7 @@ export default function ListDetail() {
                 <p className="text-sm font-medium text-primary">{assignedLabel}</p>
               )}
               {sharingLabel && (
-                <p className="text-sm text-muted-foreground">Shared with {sharingLabel}</p>
+                <p className="text-sm text-muted-foreground">{t('lists.sharedWith', { names: sharingLabel })}</p>
               )}
             </div>
           </div>
@@ -197,7 +199,7 @@ export default function ListDetail() {
             <p className="text-xs font-medium text-primary">{assignedLabel}</p>
           )}
           {sharingLabel && (
-            <p className="text-xs text-muted-foreground">Shared with {sharingLabel}</p>
+            <p className="text-xs text-muted-foreground">{t('lists.sharedWith', { names: sharingLabel })}</p>
           )}
         </div>
 
@@ -213,7 +215,7 @@ export default function ListDetail() {
           <div className="pt-1">
             {unchecked.length === 0 && checked.length === 0 ? (
               <p className="text-center text-sm text-muted-foreground py-8">
-                No items yet — add one above.
+                {t('lists.noItems')}
               </p>
             ) : (
               <>
@@ -232,7 +234,7 @@ export default function ListDetail() {
                       {checkedOpen
                         ? <ChevronDown className="h-3 w-3" />
                         : <ChevronRight className="h-3 w-3" />}
-                      Checked ({checked.length})
+                      {t('lists.checked', { count: checked.length })}
                     </button>
                     {checkedOpen && (
                       <div>
@@ -253,17 +255,17 @@ export default function ListDetail() {
       <Dialog open={showEdit} onOpenChange={setShowEdit}>
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit list</DialogTitle>
+            <DialogTitle>{t('lists.editList')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4">
             <Input
-              placeholder="List name"
+              placeholder={t('lists.listName')}
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               autoFocus
             />
             <div>
-              <p className="text-xs text-muted-foreground mb-2">Color</p>
+              <p className="text-xs text-muted-foreground mb-2">{t('lists.color')}</p>
               <div className="flex gap-2 flex-wrap">
                 {MEMBER_COLORS.map((c) => (
                   <button
@@ -281,7 +283,7 @@ export default function ListDetail() {
             </div>
             {members.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Assign to member</p>
+                <p className="text-sm font-medium">{t('lists.assignToMember')}</p>
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -293,7 +295,7 @@ export default function ListDetail() {
                         : 'border-border text-muted-foreground hover:text-foreground'
                     )}
                   >
-                    No one
+                    {t('lists.noOne')}
                   </button>
                   {members.map((m) => (
                     <button
@@ -307,7 +309,7 @@ export default function ListDetail() {
                           : 'border-border text-muted-foreground hover:text-foreground'
                       )}
                     >
-                      {m.id === currentUser?.id ? 'Me' : memberDisplayName(m.id, members)}
+                      {m.id === currentUser?.id ? t('lists.me') : memberDisplayName(m.id, members)}
                     </button>
                   ))}
                 </div>
@@ -322,10 +324,10 @@ export default function ListDetail() {
             )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setShowEdit(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={!editName.trim() || updateList.isPending}>
-                {updateList.isPending ? 'Saving…' : 'Save'}
+                {updateList.isPending ? t('common.saving') : t('common.save')}
               </Button>
             </div>
           </form>
@@ -336,21 +338,21 @@ export default function ListDetail() {
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Delete list?</DialogTitle>
+            <DialogTitle>{t('lists.deleteQuestion')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            This will permanently delete "{list?.name}" and all its items. This cannot be undone.
+            {t('lists.deleteWarning', { name: list?.name })}
           </p>
           <div className="flex justify-end gap-2 mt-2">
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDelete}
               disabled={deleteList.isPending}
             >
-              {deleteList.isPending ? 'Deleting…' : 'Delete'}
+              {deleteList.isPending ? t('lists.deleting') : t('common.delete')}
             </Button>
           </div>
         </DialogContent>

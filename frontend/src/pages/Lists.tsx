@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { Plus, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import TopBar from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,9 +18,10 @@ import type { ShareMode } from '@/types'
 
 type FilterType = 'all' | 'todo' | 'shopping'
 
-const FILTER_LABELS: Record<FilterType, string> = { all: 'All', todo: 'To-do', shopping: 'Shopping' }
+const FILTER_KEYS = { all: 'lists.filterAll', todo: 'lists.filterTodo', shopping: 'lists.filterShopping' } as const
 
 export default function Lists() {
+  const { t } = useTranslation()
   const listsQuery = useActiveLists()
   const createList = useCreateList()
   const createItem = useCreateListItem()
@@ -80,7 +82,7 @@ export default function Lists() {
       setItemText('')
       setTimeout(() => itemInputRef.current?.focus(), 50)
     } catch {
-      toast.error('Failed to create list.')
+      toast.error(t('lists.toast.createFailed'))
     }
   }
 
@@ -93,14 +95,14 @@ export default function Lists() {
       setItemText('')
       itemInputRef.current?.focus()
     } catch {
-      toast.error('Failed to add item.')
+      toast.error(t('lists.toast.itemAddFailed'))
     }
   }
 
   return (
     <>
       <TopBar
-        title="Lists"
+        title={t('lists.title')}
         actions={permissions.lists ? (
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={openCreate}>
             <Plus className="h-4 w-4" />
@@ -111,18 +113,18 @@ export default function Lists() {
       <div className="max-w-5xl mx-auto w-full p-4 md:px-8 space-y-4">
         {/* Desktop page header */}
         <div className="hidden md:flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Lists</h1>
+          <h1 className="text-xl font-semibold">{t('lists.title')}</h1>
           {permissions.lists && (
             <Button onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1.5" />
-              New list
+              {t('lists.newList')}
             </Button>
           )}
         </div>
 
         {/* Filter chips */}
         <div className="flex gap-2">
-          {(Object.keys(FILTER_LABELS) as FilterType[]).map((f) => (
+          {(Object.keys(FILTER_KEYS) as FilterType[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -133,7 +135,7 @@ export default function Lists() {
                   : 'bg-card border-border text-muted-foreground hover:text-foreground'
               )}
             >
-              {FILTER_LABELS[f]}
+              {t(FILTER_KEYS[f])}
             </button>
           ))}
         </div>
@@ -148,14 +150,14 @@ export default function Lists() {
         ) : filtered.length === 0 ? (
           <div className="rounded-xl border border-dashed p-12 text-center">
             <p className="text-sm text-muted-foreground">
-              {filter === 'all' ? 'No lists yet' : `No ${FILTER_LABELS[filter].toLowerCase()} lists`}
+              {filter === 'all' ? t('lists.noListsYet') : filter === 'todo' ? t('lists.noTodoLists') : t('lists.noShoppingLists')}
             </p>
             {filter === 'all' && (
               <button
                 className="mt-2 text-xs text-primary hover:underline"
                 onClick={openCreate}
               >
-                + Create a list
+                {t('lists.createAList')}
               </button>
             )}
           </div>
@@ -172,36 +174,36 @@ export default function Lists() {
       <Dialog open={showCreate} onOpenChange={(o) => { if (!o) closeCreate() }}>
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{createdListId ? `Add items to "${newName}"` : 'New list'}</DialogTitle>
+            <DialogTitle>{createdListId ? t('lists.addItemsTo', { name: newName }) : t('lists.newList')}</DialogTitle>
           </DialogHeader>
 
           {!createdListId ? (
             <form onSubmit={handleCreate} className="space-y-4">
               <Input
-                placeholder="List name"
+                placeholder={t('lists.listName')}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 autoFocus
               />
               <div className="flex gap-2">
-                {(['todo', 'shopping'] as const).map((t) => (
+                {(['todo', 'shopping'] as const).map((type) => (
                   <button
-                    key={t}
+                    key={type}
                     type="button"
-                    onClick={() => setNewType(t)}
+                    onClick={() => setNewType(type)}
                     className={cn(
                       'flex-1 rounded-lg border py-2 text-sm font-medium transition-colors',
-                      newType === t
+                      newType === type
                         ? 'bg-primary/10 text-primary border-primary/40'
                         : 'bg-card border-border text-muted-foreground hover:text-foreground'
                     )}
                   >
-                    {t === 'todo' ? 'To-do' : 'Shopping'}
+                    {type === 'todo' ? t('lists.typeTodo') : t('lists.typeShopping')}
                   </button>
                 ))}
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-2">Color</p>
+                <p className="text-xs text-muted-foreground mb-2">{t('lists.color')}</p>
                 <div className="flex gap-2 flex-wrap">
                   {MEMBER_COLORS.map((c) => (
                     <button
@@ -219,7 +221,7 @@ export default function Lists() {
               </div>
               {household && (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Assign to member</p>
+                  <p className="text-xs text-muted-foreground">{t('lists.assignToMember')}</p>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -231,7 +233,7 @@ export default function Lists() {
                           : 'border-border text-muted-foreground hover:text-foreground'
                       )}
                     >
-                      No one
+                      {t('lists.noOne')}
                     </button>
                     {members.map((m) => (
                       <button
@@ -245,7 +247,7 @@ export default function Lists() {
                             : 'border-border text-muted-foreground hover:text-foreground'
                         )}
                       >
-                        {m.id === user?.id ? 'Me' : memberDisplayName(m.id, members)}
+                        {m.id === user?.id ? t('lists.me') : memberDisplayName(m.id, members)}
                       </button>
                     ))}
                   </div>
@@ -260,10 +262,10 @@ export default function Lists() {
               )}
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={closeCreate}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={!newName.trim() || createList.isPending}>
-                  {createList.isPending ? 'Creating…' : 'Create'}
+                  {createList.isPending ? t('lists.creating') : t('lists.create')}
                 </Button>
               </div>
             </form>
@@ -272,7 +274,7 @@ export default function Lists() {
               <form onSubmit={handleAddItem} className="flex gap-2">
                 <Input
                   ref={itemInputRef}
-                  placeholder="Add an item…"
+                  placeholder={t('lists.addItemPlaceholder')}
                   value={itemText}
                   onChange={(e) => setItemText(e.target.value)}
                   autoFocus
@@ -295,7 +297,7 @@ export default function Lists() {
               )}
 
               <div className="flex justify-end pt-2 border-t border-border">
-                <Button onClick={closeCreate}>Done</Button>
+                <Button onClick={closeCreate}>{t('lists.done')}</Button>
               </div>
             </div>
           )}

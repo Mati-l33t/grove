@@ -1,4 +1,6 @@
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
+import { weekdayLabels } from "@/lib/dateLocale"
 import { format, isSameDay, parseISO, getDaysInMonth, startOfMonth } from "date-fns"
 import { useCalendar } from "../../contexts/calendar-context"
 import { YearViewDayCell } from "./year-view-day-cell"
@@ -12,9 +14,8 @@ interface IProps {
 export function YearViewMonth({ month, events }: IProps) {
   const { setSelectedDate, setView, firstDayOfWeek } = useCalendar()
 
-  const WEEK_DAYS = firstDayOfWeek === 1
-    ? ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-    : ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
+  useTranslation() // re-render when the language changes
+  const WEEK_DAYS = weekdayLabels(firstDayOfWeek === 1 ? 1 : 0, "EEEEEE")
 
   const monthName = format(month, "MMMM")
 

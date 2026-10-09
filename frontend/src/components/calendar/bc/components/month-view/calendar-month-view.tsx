@@ -1,4 +1,6 @@
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
+import { weekdayLabels } from "@/lib/dateLocale"
 import { useCalendar } from "../../contexts/calendar-context"
 import { DayCell } from "./day-cell"
 import { getCalendarCells, calculateMonthEventPositions } from "../../helpers"
@@ -13,9 +15,8 @@ export function CalendarMonthView({ singleDayEvents, multiDayEvents }: IProps) {
   const { selectedDate, firstDayOfWeek } = useCalendar()
   const allEvents = [...multiDayEvents, ...singleDayEvents]
 
-  const WEEK_DAYS = firstDayOfWeek === 1
-    ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  useTranslation() // re-render when the language changes
+  const WEEK_DAYS = weekdayLabels(firstDayOfWeek === 1 ? 1 : 0, "EEE")
 
   const cells = useMemo(
     () => getCalendarCells(selectedDate, firstDayOfWeek),

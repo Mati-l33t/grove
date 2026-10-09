@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useHouseholdMembers } from '@/hooks/useHousehold'
 import { useHour12, useWeekStart } from '@/lib/timeFormat'
 import pb from '@/lib/pb'
+import i18n from '@/lib/i18n'
 import { CalendarProvider } from './bc/contexts/calendar-context'
 import { ClientContainer } from './bc/components/client-container'
 import EventModal from './EventModal'
@@ -118,7 +119,7 @@ function groveEventToIEvent(
 
   const user: IUser = {
     id: event.expand?.user?.id ?? event.user,
-    name: event.expand?.user?.name ?? member?.name ?? 'Unknown',
+    name: event.expand?.user?.name ?? member?.name ?? i18n.t('scope.unknown'),
     picturePath: event.expand?.user?.avatar
       ? pb.files.getURL(event.expand.user, event.expand.user.avatar)
       : null,

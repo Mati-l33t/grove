@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { CheckSquare, ShoppingCart } from 'lucide-react'
 import { useHouseholdMembers } from '@/hooks/useHousehold'
 import { useAuthStore } from '@/stores/authStore'
 import type { List, User } from '@/types'
 
-function getSharingLabel(list: List, members: User[]): string | null {
-  if (list.household) return 'Everyone'
+function getSharingLabel(list: List, members: User[], t: TFunction): string | null {
+  if (list.household) return t('lists.everyone')
   if (list.shared_with?.length) {
     return list.shared_with
       .map((id) => members.find((m) => m.id === id)?.name?.split(' ')[0] || '?')
@@ -15,11 +17,12 @@ function getSharingLabel(list: List, members: User[]): string | null {
 }
 
 export default function ListCard({ list }: { list: List }) {
+  const { t } = useTranslation()
   const Icon = list.type === 'shopping' ? ShoppingCart : CheckSquare
   const color = list.color || '#22c55e'
   const { data: members = [] } = useHouseholdMembers()
   const { user } = useAuthStore()
-  const sharingLabel = getSharingLabel(list, members)
+  const sharingLabel = getSharingLabel(list, members, t)
 
   const assignedToName = list.expand?.assigned_to?.name?.split(' ')[0]
     ?? (list.assigned_to ? members.find((m) => m.id === list.assigned_to)?.name?.split(' ')[0] : null)
@@ -28,9 +31,9 @@ export default function ListCard({ list }: { list: List }) {
 
   const assignedLabel =
     list.assigned_to && list.assigned_to !== user?.id
-      ? `For: ${assignedToName ?? '?'}`
+      ? t('scope.for', { names: assignedToName ?? '?' })
       : list.assigned_to === user?.id && list.user !== user?.id
-      ? `From: ${creatorName ?? '?'}`
+      ? t('scope.from', { name: creatorName ?? '?' })
       : null
 
   return (
@@ -48,7 +51,7 @@ export default function ListCard({ list }: { list: List }) {
         <div className="min-w-0 flex-1">
           <p className="font-medium truncate">{list.name}</p>
           <p className="text-xs text-muted-foreground truncate">
-            {list.type === 'todo' ? 'To-do' : 'Shopping'}
+            {list.type === 'todo' ? t('lists.typeTodo') : t('lists.typeShopping')}
             {assignedLabel
               ? ` · ${assignedLabel}`
               : sharingLabel

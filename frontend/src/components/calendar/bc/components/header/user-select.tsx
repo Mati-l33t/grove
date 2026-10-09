@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next"
 import { useCalendar } from "../../contexts/calendar-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function UserSelect() {
+  const { t } = useTranslation()
   const { users, selectedUserId, setSelectedUserId } = useCalendar()
 
   if (users.length === 0) return null
@@ -23,7 +25,7 @@ export function UserSelect() {
                 </Avatar>
               ))}
             </div>
-            All
+            {t("calendar.all")}
           </div>
         </SelectItem>
         {users.map(user => (

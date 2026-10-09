@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { format, isTomorrow, startOfDay } from 'date-fns'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import { useDateLocale } from '@/lib/dateLocale'
 import {
   ArrowUp,
   Calendar,
@@ -42,11 +44,11 @@ import {
 } from '@/components/ui/select'
 import type { CalendarEvent } from '@/types'
 
-function getGreeting(hour: number): string {
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  if (hour < 21) return 'Good evening'
-  return 'Good night'
+function getGreetingKey(hour: number) {
+  if (hour < 12) return 'today.morning' as const
+  if (hour < 17) return 'today.afternoon' as const
+  if (hour < 21) return 'today.evening' as const
+  return 'today.night' as const
 }
 
 function SectionHeader({
@@ -58,6 +60,7 @@ function SectionHeader({
   icon: React.ReactNode
   href: string
 }) {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center justify-between mb-3">
       <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -68,20 +71,22 @@ function SectionHeader({
         to={href}
         className="text-xs text-primary flex items-center gap-0.5 hover:underline"
       >
-        View all <ChevronRight className="h-3 w-3" />
+        {t('today.viewAll')} <ChevronRight className="h-3 w-3" />
       </Link>
     </div>
   )
 }
 
 export default function Today() {
+  const { t } = useTranslation()
+  const locale = useDateLocale()
   const { user } = useAuthStore()
   const hour12 = useHour12()
 
   const now = new Date()
-  const greeting = getGreeting(now.getHours())
+  const greeting = t(getGreetingKey(now.getHours()))
   const firstName = user?.name?.split(' ')[0] ?? ''
-  const dateLabel = format(now, 'EEEE, MMMM d')
+  const dateLabel = format(now, t('formats.dateLong'), { locale })
   const userColor = user?.color || '#22c55e'
 
   const greetingPrefix = `${greeting}${firstName ? ', ' : ''}`
@@ -148,11 +153,11 @@ export default function Today() {
     if (!itemText.trim() || !selectedListId) return
     try {
       await createListItem.mutateAsync({ listId: selectedListId, text: itemText.trim() })
-      toast.success('Item added.')
+      toast.success(t('today.itemAdded'))
       setItemText('')
       setShowItemDialog(false)
     } catch {
-      toast.error('Failed to add item.')
+      toast.error(t('today.itemFailed'))
     }
   }
 
@@ -173,7 +178,7 @@ export default function Today() {
 
   return (
     <>
-      <TopBar title="Today" />
+      <TopBar title={t('today.title')} />
 
       <div className="max-w-5xl mx-auto w-full p-4 md:px-8 space-y-6">
         {/* Greeting */}
@@ -221,7 +226,7 @@ export default function Today() {
           {/* Today's events */}
           <section>
             <SectionHeader
-              title="Today's events"
+              title={t('today.todaysEvents')}
               icon={<Calendar className="h-3.5 w-3.5" />}
               href="/calendar"
             />
@@ -247,7 +252,7 @@ export default function Today() {
               </div>
             ) : events.length === 0 ? (
               <div className="rounded-lg border border-dashed p-6 text-center">
-                <p className="text-sm text-muted-foreground">No events today</p>
+                <p className="text-sm text-muted-foreground">{t('today.noEventsToday')}</p>
                 <button
                   className="mt-2 text-xs text-primary hover:underline"
                   onClick={() => {
@@ -255,7 +260,7 @@ export default function Today() {
                     setShowEventDialog(true)
                   }}
                 >
-                  + Add event
+                  {t('today.addEventLink')}
                 </button>
               </div>
             ) : (
@@ -265,7 +270,7 @@ export default function Today() {
                   const startDate = new Date(event.start.replace(' ', 'T'))
                   const endDate = event.end ? new Date(event.end.replace(' ', 'T')) : null
                   const timeLabel = event.all_day
-                    ? 'All day'
+                    ? t('today.allDay')
                     : endDate && endDate.getTime() !== startDate.getTime()
                       ? `${formatTime(startDate, hour12)} – ${formatTime(endDate, hour12)}`
                       : formatTime(startDate, hour12)
@@ -291,7 +296,7 @@ export default function Today() {
                               className="inline-block size-2 rounded-full flex-shrink-0"
                               style={{ backgroundColor: event.expand?.user?.color || color }}
                             />
-                            {event.expand?.user?.name?.split(' ')[0] ?? householdMembers.find(m => m.id === event.user)?.name?.split(' ')[0] ?? 'Unknown'}
+                            {event.expand?.user?.name?.split(' ')[0] ?? householdMembers.find(m => m.id === event.user)?.name?.split(' ')[0] ?? t('scope.unknown')}
                           </p>
                         )}
                       </div>
@@ -305,7 +310,7 @@ export default function Today() {
           {/* Upcoming this week */}
           <section>
             <SectionHeader
-              title="Upcoming this week"
+              title={t('today.upcomingWeek')}
               icon={<CalendarDays className="h-3.5 w-3.5" />}
               href="/calendar"
             />
@@ -316,7 +321,7 @@ export default function Today() {
               </div>
             ) : dayGroups.length === 0 ? (
               <div className="rounded-lg border border-dashed p-4 text-center">
-                <p className="text-sm text-muted-foreground">Nothing else this week</p>
+                <p className="text-sm text-muted-foreground">{t('today.nothingElse')}</p>
                 <button
                   className="mt-2 text-xs text-primary hover:underline"
                   onClick={() => {
@@ -324,7 +329,7 @@ export default function Today() {
                     setShowEventDialog(true)
                   }}
                 >
-                  + Add event
+                  {t('today.addEventLink')}
                 </button>
               </div>
             ) : (
@@ -332,7 +337,7 @@ export default function Today() {
                 {dayGroups.map(({ day, events: dayEvents }) => (
                   <div key={day.toISOString()}>
                     <p className="text-xs font-semibold text-muted-foreground mb-1.5 px-1">
-                      {isTomorrow(day) ? 'Tomorrow' : format(day, 'EEEE d')}
+                      {isTomorrow(day) ? t('today.tomorrow') : format(day, t('formats.weekdayDay'), { locale })}
                     </p>
                     <div className="space-y-1.5">
                       {dayEvents.map((event) => {
@@ -340,7 +345,7 @@ export default function Today() {
                         const startDate = new Date(event.start.replace(' ', 'T'))
                         const endDate = event.end ? new Date(event.end.replace(' ', 'T')) : null
                         const timeLabel = event.all_day
-                          ? 'All day'
+                          ? t('today.allDay')
                           : endDate && endDate.getTime() !== startDate.getTime()
                             ? `${formatTime(startDate, hour12)} – ${formatTime(endDate, hour12)}`
                             : formatTime(startDate, hour12)
@@ -366,7 +371,7 @@ export default function Today() {
                                     className="inline-block size-2 rounded-full flex-shrink-0"
                                     style={{ backgroundColor: event.expand?.user?.color || color }}
                                   />
-                                  {event.expand?.user?.name?.split(' ')[0] ?? householdMembers.find(m => m.id === event.user)?.name?.split(' ')[0] ?? 'Unknown'}
+                                  {event.expand?.user?.name?.split(' ')[0] ?? householdMembers.find(m => m.id === event.user)?.name?.split(' ')[0] ?? t('scope.unknown')}
                                 </p>
                               )}
                             </div>
@@ -384,7 +389,7 @@ export default function Today() {
         {/* Lists */}
         <section>
           <SectionHeader
-            title="Lists"
+            title={t('today.lists')}
             icon={<CheckSquare className="h-3.5 w-3.5" />}
             href="/lists"
           />
@@ -396,12 +401,12 @@ export default function Today() {
             </div>
           ) : lists.length === 0 ? (
             <div className="rounded-lg border border-dashed p-6 text-center">
-              <p className="text-sm text-muted-foreground">No active lists</p>
+              <p className="text-sm text-muted-foreground">{t('today.noLists')}</p>
               <Link
                 to="/lists"
                 className="mt-2 block text-xs text-primary hover:underline"
               >
-                + Create list
+                {t('today.createList')}
               </Link>
             </div>
           ) : (
@@ -414,11 +419,11 @@ export default function Today() {
                   ?? householdMembers.find((m) => m.id === list.user)?.name?.split(' ')[0]
                 const assignedLabel =
                   list.assigned_to && list.assigned_to !== user?.id
-                    ? `For: ${assignedToName ?? '?'}`
+                    ? t('scope.for', { names: assignedToName ?? '?' })
                     : list.assigned_to === user?.id && list.user !== user?.id
-                    ? `From: ${creatorName ?? '?'}`
+                    ? t('scope.from', { name: creatorName ?? '?' })
                     : list.assigned_to === user?.id
-                    ? 'For: Me'
+                    ? t('scope.forMe')
                     : null
                 return (
                   <Link
@@ -446,7 +451,7 @@ export default function Today() {
         {/* Meal plan */}
         <section>
           <SectionHeader
-            title="Today's meals"
+            title={t('today.todaysMeals')}
             icon={<UtensilsCrossed className="h-3.5 w-3.5" />}
             href="/meal-plan"
           />
@@ -467,13 +472,13 @@ export default function Today() {
                     const names = meal.shared_with
                       .map((id) => householdMembers.find((m) => m.id === id)?.name?.split(' ')[0] || '?')
                       .join(', ')
-                    return `For: ${names}`
+                    return t('scope.for', { names })
                   }
                   if (meal.user !== user?.id) {
                     const plannerName = meal.expand?.user?.name?.split(' ')[0]
                       ?? householdMembers.find((m) => m.id === meal.user)?.name?.split(' ')[0]
                       ?? '?'
-                    return `From: ${plannerName}`
+                    return t('scope.from', { name: plannerName })
                   }
                   return null
                 }
@@ -484,8 +489,8 @@ export default function Today() {
                     className="rounded-lg border bg-card p-3 hover:bg-accent/50 transition-colors cursor-pointer"
                     onClick={() => setMealSlot({ date: todayStr, mealType })}
                   >
-                    <p className="text-xs font-medium capitalize text-muted-foreground mb-1">
-                      {mealType}
+                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                      {t(`meals.${mealType}`)}
                     </p>
                     {slotMeals.length === 0 ? (
                       <p className="text-sm text-muted-foreground">—</p>
@@ -516,7 +521,7 @@ export default function Today() {
       {/* Scroll to top */}
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        aria-label="Scroll to top"
+        aria-label={t('today.scrollTop')}
         className={cn(
           'fixed bottom-20 left-4 md:bottom-6 md:left-60 z-40 h-10 w-10 rounded-full bg-card border shadow-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200',
           showScrollTop ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'
@@ -543,7 +548,7 @@ export default function Today() {
             }}
           >
             <Calendar className="h-4 w-4 text-primary" />
-            Add event
+            {t('today.addEvent')}
           </button>
           <button
             className="flex items-center gap-2 rounded-full bg-card border shadow-md px-3 py-2 text-sm font-medium hover:bg-accent/50 transition-colors whitespace-nowrap"
@@ -553,14 +558,14 @@ export default function Today() {
             }}
           >
             <CheckSquare className="h-4 w-4 text-primary" />
-            Add to list
+            {t('today.addToList')}
           </button>
         </div>
 
         <button
           className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 active:scale-95 transition-all"
           onClick={() => setFabOpen(!fabOpen)}
-          aria-label={fabOpen ? 'Close menu' : 'Quick add'}
+          aria-label={fabOpen ? t('today.closeMenu') : t('today.quickAdd')}
         >
           {fabOpen ? (
             <X className="h-6 w-6" />
@@ -615,20 +620,20 @@ export default function Today() {
       >
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add to list</DialogTitle>
+            <DialogTitle>{t('today.addToList')}</DialogTitle>
           </DialogHeader>
           {lists.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No lists yet.{' '}
+              {t('today.noListsYet')}{' '}
               <Link to="/lists" className="text-primary hover:underline">
-                Create one first.
+                {t('today.createFirst')}
               </Link>
             </p>
           ) : (
             <form onSubmit={handleAddItem} className="space-y-4">
               <Select value={selectedListId} onValueChange={setSelectedListId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a list" />
+                  <SelectValue placeholder={t('today.chooseList')} />
                 </SelectTrigger>
                 <SelectContent>
                   {lists.map((list) => (
@@ -639,7 +644,7 @@ export default function Today() {
                 </SelectContent>
               </Select>
               <Input
-                placeholder="Item text"
+                placeholder={t('today.itemText')}
                 value={itemText}
                 onChange={(e) => setItemText(e.target.value)}
                 autoFocus
@@ -650,13 +655,13 @@ export default function Today() {
                   variant="outline"
                   onClick={() => setShowItemDialog(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   disabled={!itemText.trim() || !selectedListId || createListItem.isPending}
                 >
-                  {createListItem.isPending ? 'Adding…' : 'Add item'}
+                  {createListItem.isPending ? t('today.adding') : t('today.addItem')}
                 </Button>
               </div>
             </form>

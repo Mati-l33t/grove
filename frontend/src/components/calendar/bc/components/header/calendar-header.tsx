@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Columns, Grid3x3, List, Plus, Grid2x2, CalendarRange } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { UserSelect } from "./user-select"
@@ -12,14 +13,15 @@ interface IProps {
 }
 
 export function CalendarHeader({ events }: IProps) {
+  const { t } = useTranslation()
   const { view, setView, onDateClick } = useCalendar()
 
   const viewButtons: { key: TCalendarView; icon: React.ReactNode; label: string }[] = [
-    { key: "day", icon: <List strokeWidth={1.8} className="size-5" />, label: "View by day" },
-    { key: "week", icon: <Columns strokeWidth={1.8} className="size-5" />, label: "View by week" },
-    { key: "month", icon: <Grid2x2 strokeWidth={1.8} className="size-5" />, label: "View by month" },
-    { key: "year", icon: <Grid3x3 strokeWidth={1.8} className="size-5" />, label: "View by year" },
-    { key: "agenda", icon: <CalendarRange strokeWidth={1.8} className="size-5" />, label: "View by agenda" },
+    { key: "day", icon: <List strokeWidth={1.8} className="size-5" />, label: t("calendar.viewDay") },
+    { key: "week", icon: <Columns strokeWidth={1.8} className="size-5" />, label: t("calendar.viewWeek") },
+    { key: "month", icon: <Grid2x2 strokeWidth={1.8} className="size-5" />, label: t("calendar.viewMonth") },
+    { key: "year", icon: <Grid3x3 strokeWidth={1.8} className="size-5" />, label: t("calendar.viewYear") },
+    { key: "agenda", icon: <CalendarRange strokeWidth={1.8} className="size-5" />, label: t("calendar.viewAgenda") },
   ]
 
   return (
@@ -52,7 +54,7 @@ export function CalendarHeader({ events }: IProps) {
         </div>
         <Button className="w-full sm:w-auto" onClick={() => onDateClick(new Date())}>
           <Plus className="mr-1.5 size-4" />
-          New event
+          {t("calendar.newEventButton")}
         </Button>
       </div>
     </div>

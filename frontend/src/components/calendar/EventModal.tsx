@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import { reminderLabel } from '@/lib/reminder'
 import { MapPin, Trash2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -45,6 +47,7 @@ function localToUtcPb(date: string, time: string): string {
 }
 
 export default function EventModal({ open, mode, event, defaultDate, onClose }: Props) {
+  const { t } = useTranslation()
   const { user } = useAuthStore()
   const { data: members = [] } = useHouseholdMembers()
   const [shareMode, setShareMode] = useState<ShareMode>('private')
@@ -155,24 +158,24 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
     try {
       if (mode === 'create') {
         await createEvent.mutateAsync(buildEventData())
-        toast.success('Event created.')
+        toast.success(t('calendar.toast.created'))
       } else {
         await updateEvent.mutateAsync({ id: event!.id, ...buildEventData() })
-        toast.success('Event updated.')
+        toast.success(t('calendar.toast.updated'))
       }
       onClose()
     } catch {
-      toast.error(mode === 'create' ? 'Failed to create event.' : 'Failed to update event.')
+      toast.error(mode === 'create' ? t('calendar.toast.createFailed') : t('calendar.toast.updateFailed'))
     }
   }
 
   async function handleDelete() {
     try {
       await deleteEvent.mutateAsync(event!.id)
-      toast.success('Event deleted.')
+      toast.success(t('calendar.toast.deleted'))
       onClose()
     } catch {
-      toast.error('Failed to delete event.')
+      toast.error(t('calendar.toast.deleteFailed'))
     }
   }
 
@@ -182,15 +185,15 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'New event' : 'Edit event'}</DialogTitle>
+          <DialogTitle>{mode === 'create' ? t('calendar.newEvent') : t('calendar.editEvent')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="event-title">Title</Label>
+            <Label htmlFor="event-title">{t('calendar.title')}</Label>
             <Input
               id="event-title"
-              placeholder="Event title"
+              placeholder={t('calendar.eventTitlePlaceholder')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
@@ -200,7 +203,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
 
           {members.length > 0 && (
             <div className="space-y-1.5">
-              <Label>Assign to</Label>
+              <Label>{t('calendar.assignTo')}</Label>
               <Select value={assignedUserId} onValueChange={setAssignedUserId}>
                 <SelectTrigger>
                   <SelectValue />
@@ -213,7 +216,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                           <AvatarImage src={m.avatar ? pb.files.getURL(m as Parameters<typeof pb.files.getURL>[0], m.avatar) : undefined} />
                           <AvatarFallback className="text-[10px]">{m.name?.[0]?.toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        {m.name}{m.id === user?.id ? ' (you)' : ''}
+                        {m.id === user?.id ? t('common.you', { name: m.name }) : m.name}
                       </div>
                     </SelectItem>
                   ))}
@@ -223,22 +226,22 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="event-desc">Description</Label>
+            <Label htmlFor="event-desc">{t('calendar.description')}</Label>
             <Input
               id="event-desc"
-              placeholder="Optional description"
+              placeholder={t('calendar.descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="event-location">Location</Label>
+            <Label htmlFor="event-location">{t('calendar.location')}</Label>
             <div className="relative">
               <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 id="event-location"
-                placeholder="Optional location"
+                placeholder={t('calendar.locationPlaceholder')}
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 className="pl-8"
@@ -253,12 +256,12 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
               onChange={(e) => setAllDay(e.target.checked)}
               className="h-4 w-4 accent-primary cursor-pointer rounded"
             />
-            <span className="text-sm font-medium">All day</span>
+            <span className="text-sm font-medium">{t('calendar.allDay')}</span>
           </label>
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1.5">
-              <Label>Start date</Label>
+              <Label>{t('calendar.startDate')}</Label>
               <Input
                 type="date"
                 value={startDate}
@@ -270,7 +273,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
             </div>
             {!allDay && (
               <div className="space-y-1.5">
-                <Label>Start time</Label>
+                <Label>{t('calendar.startTime')}</Label>
                 <Input
                   type="time"
                   value={startTime}
@@ -283,7 +286,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
           {!allDay && (
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
-                <Label>End date</Label>
+                <Label>{t('calendar.endDate')}</Label>
                 <Input
                   type="date"
                   value={endDate}
@@ -292,7 +295,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>End time</Label>
+                <Label>{t('calendar.endTime')}</Label>
                 <Input
                   type="time"
                   value={endTime}
@@ -303,7 +306,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
           )}
 
           <div className="space-y-2">
-            <Label>Color</Label>
+            <Label>{t('calendar.color')}</Label>
             <div className="flex items-center gap-2 flex-wrap">
               {COLOR_SWATCHES.map((c) => (
                 <button
@@ -325,13 +328,13 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
-                title="Custom color"
+                title={t('calendar.customColor')}
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label>Repeat</Label>
+            <Label>{t('calendar.repeat')}</Label>
             <Select
               value={recurring}
               onValueChange={(v) => setRecurring(v as typeof recurring)}
@@ -340,18 +343,18 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Does not repeat</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
+                <SelectItem value="none">{t('calendar.repeatNone')}</SelectItem>
+                <SelectItem value="daily">{t('calendar.repeatDaily')}</SelectItem>
+                <SelectItem value="weekly">{t('calendar.repeatWeekly')}</SelectItem>
+                <SelectItem value="monthly">{t('calendar.repeatMonthly')}</SelectItem>
+                <SelectItem value="yearly">{t('calendar.repeatYearly')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {recurring !== 'none' && (
             <div className="space-y-1.5">
-              <Label>Repeat until</Label>
+              <Label>{t('calendar.repeatUntil')}</Label>
               <Input
                 type="date"
                 value={recurringEnd}
@@ -362,7 +365,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
           )}
 
           <div className="space-y-1.5">
-            <Label>Reminder</Label>
+            <Label>{t('calendar.reminder')}</Label>
             <Select
               value={String(reminderMinutes)}
               onValueChange={(v) => setReminderMinutes(Number(v))}
@@ -371,13 +374,10 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="0">No reminder</SelectItem>
-                <SelectItem value="5">5 minutes before</SelectItem>
-                <SelectItem value="10">10 minutes before</SelectItem>
-                <SelectItem value="15">15 minutes before</SelectItem>
-                <SelectItem value="30">30 minutes before</SelectItem>
-                <SelectItem value="60">1 hour before</SelectItem>
-                <SelectItem value="1440">1 day before</SelectItem>
+                <SelectItem value="0">{t('reminder.none')}</SelectItem>
+                {[5, 10, 15, 30, 60, 1440].map((m) => (
+                  <SelectItem key={m} value={String(m)}>{reminderLabel(t, m)}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -391,7 +391,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
           <div className="flex flex-col gap-2 pt-2 border-t border-border">
             {showDeleteConfirm && (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground flex-1">Delete this event?</span>
+                <span className="text-xs text-muted-foreground flex-1">{t('calendar.deleteConfirm')}</span>
                 <Button
                   type="button"
                   variant="destructive"
@@ -399,7 +399,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                   onClick={handleDelete}
                   disabled={deleteEvent.isPending}
                 >
-                  {deleteEvent.isPending ? 'Deleting…' : 'Delete'}
+                  {deleteEvent.isPending ? t('calendar.deleting') : t('common.delete')}
                 </Button>
                 <Button
                   type="button"
@@ -407,7 +407,7 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                   size="sm"
                   onClick={() => setShowDeleteConfirm(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             )}
@@ -421,17 +421,17 @@ export default function EventModal({ open, mode, event, defaultDate, onClose }: 
                   onClick={() => setShowDeleteConfirm(true)}
                 >
                   <Trash2 className="h-4 w-4 mr-1.5" />
-                  Delete
+                  {t('common.delete')}
                 </Button>
               ) : (
                 <div />
               )}
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button type="submit" disabled={!title.trim() || isPending}>
-                  {isPending ? 'Saving…' : mode === 'create' ? 'Create' : 'Save'}
+                  {isPending ? t('common.saving') : mode === 'create' ? t('calendar.create') : t('common.save')}
                 </Button>
               </div>
             </div>

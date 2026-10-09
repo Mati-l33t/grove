@@ -12,7 +12,7 @@ export function TodayButton() {
       onClick={handleClick}
     >
       <p className="flex h-6 w-full items-center justify-center bg-primary text-center text-xs font-semibold text-primary-foreground">
-        {format(today, "MMM").toUpperCase()}
+        {format(today, "MMM").replace(/\.$/, "").toUpperCase()}
       </p>
       <p className="flex w-full items-center justify-center text-lg font-bold">{today.getDate()}</p>
     </button>

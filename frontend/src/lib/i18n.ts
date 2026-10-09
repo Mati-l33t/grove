@@ -1,6 +1,8 @@
 import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
+import { setDefaultOptions } from 'date-fns'
+import { dateLocaleFor } from '@/lib/dateLocale'
 import en from '@/locales/en.json'
 import fr from '@/locales/fr.json'
 
@@ -33,10 +35,14 @@ i18n
     },
   })
 
-i18n.on('languageChanged', (lng) => {
+// date-fns picks up the app language for every format() call that renders names.
+function syncDateLocale(lng: string) {
   document.documentElement.lang = lng
-})
-document.documentElement.lang = i18n.resolvedLanguage ?? 'en'
+  setDefaultOptions({ locale: dateLocaleFor(lng) })
+}
+
+i18n.on('languageChanged', syncDateLocale)
+syncDateLocale(i18n.resolvedLanguage ?? 'en')
 
 /** Apply a stored preference. Empty/unknown = auto (browser language). */
 export function applyLanguagePreference(pref: string | undefined | null) {

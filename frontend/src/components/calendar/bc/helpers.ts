@@ -6,6 +6,7 @@ import {
   startOfYear, subYears, addYears, isSameYear, isWithinInterval,
 } from "date-fns"
 
+import i18n from "@/lib/i18n"
 import type { ICalendarCell, IEvent } from "./interfaces"
 import type { TCalendarView, TEventColor, TVisibleHours, TWorkingHours } from "./types"
 
@@ -33,7 +34,7 @@ export function hexToEventColor(hex: string): TEventColor {
 }
 
 export function rangeText(view: TCalendarView, date: Date) {
-  const formatString = "MMM d, yyyy"
+  const formatString = i18n.t("calendar.rangeFormat")
   let start: Date
   let end: Date
 

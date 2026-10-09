@@ -1,4 +1,5 @@
 import { differenceInDays, format, parseISO, startOfDay } from "date-fns"
+import i18n from "@/lib/i18n"
 import { AgendaEventCard } from "./agenda-event-card"
 import type { IEvent } from "../../interfaces"
 
@@ -16,7 +17,7 @@ export function AgendaDayGroup({ date, events, multiDayEvents }: IProps) {
   return (
     <div className="space-y-4">
       <div className="sticky top-0 flex items-center gap-4 bg-background py-2">
-        <p className="text-sm font-semibold">{format(date, "EEEE, MMMM d, yyyy")}</p>
+        <p className="text-sm font-semibold">{format(date, i18n.t("calendar.agendaDay"))}</p>
       </div>
       <div className="space-y-2">
         {multiDayEvents.length > 0 &&

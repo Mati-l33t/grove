@@ -1,4 +1,5 @@
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToggleListItem, useDeleteListItem } from '@/hooks/useLists'
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function ListItem({ item, listId }: Props) {
+  const { t } = useTranslation()
   const toggle = useToggleListItem(listId)
   const deleteItem = useDeleteListItem(listId)
   const { user } = useAuthStore()
@@ -20,7 +22,7 @@ export default function ListItem({ item, listId }: Props) {
     try {
       await toggle.mutateAsync({ id: item.id, checked: !item.checked })
     } catch {
-      toast.error('Failed to update item.')
+      toast.error(t('lists.toast.itemUpdateFailed'))
     }
   }
 
@@ -28,7 +30,7 @@ export default function ListItem({ item, listId }: Props) {
     try {
       await deleteItem.mutateAsync(item.id)
     } catch {
-      toast.error('Failed to delete item.')
+      toast.error(t('lists.toast.itemDeleteFailed'))
     }
   }
 
@@ -44,7 +46,7 @@ export default function ListItem({ item, listId }: Props) {
             ? 'bg-primary border-primary'
             : 'border-muted-foreground/40 hover:border-primary'
         )}
-        aria-label={item.checked ? 'Uncheck item' : 'Check item'}
+        aria-label={item.checked ? t('lists.uncheckItem') : t('lists.checkItem')}
       >
         {item.checked && (
           <svg viewBox="0 0 10 10" className="h-3 w-3 text-primary-foreground" fill="none">
@@ -73,7 +75,7 @@ export default function ListItem({ item, listId }: Props) {
           onClick={handleDelete}
           disabled={deleteItem.isPending}
           className="opacity-0 group-hover:opacity-100 flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-destructive transition-all"
-          aria-label="Delete item"
+          aria-label={t('lists.deleteItem')}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>

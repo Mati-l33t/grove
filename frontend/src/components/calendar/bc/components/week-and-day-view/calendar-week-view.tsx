@@ -1,4 +1,5 @@
 import { startOfWeek, addDays, format, parseISO, isSameDay, areIntervalsOverlapping } from "date-fns"
+import { useTranslation } from "react-i18next"
 import { useCalendar } from "../../contexts/calendar-context"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { EventBlock } from "./event-block"
@@ -15,6 +16,7 @@ interface IProps {
 }
 
 export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
+  const { t } = useTranslation()
   const { selectedDate, workingHours, visibleHours, firstDayOfWeek, onDateClick, hour12 } = useCalendar()
   const { hours, earliestEventHour, latestEventHour } = getVisibleHours(visibleHours, singleDayEvents)
 
@@ -24,8 +26,8 @@ export function CalendarWeekView({ singleDayEvents, multiDayEvents }: IProps) {
   return (
     <>
       <div className="flex flex-col items-center justify-center border-b py-4 text-sm text-muted-foreground sm:hidden">
-        <p>Weekly view is not available on smaller devices.</p>
-        <p>Please switch to daily or monthly view.</p>
+        <p>{t("calendar.weekUnavailable")}</p>
+        <p>{t("calendar.weekUnavailableHint")}</p>
       </div>
 
       <div className="hidden flex-col sm:flex">

@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCreateListItem } from '@/hooks/useLists'
 
 export default function AddItemInput({ listId }: { listId: string }) {
+  const { t } = useTranslation()
   const [text, setText] = useState('')
   const createItem = useCreateListItem()
 
@@ -16,14 +18,14 @@ export default function AddItemInput({ listId }: { listId: string }) {
       await createItem.mutateAsync({ listId, text: text.trim() })
       setText('')
     } catch {
-      toast.error('Failed to add item.')
+      toast.error(t('lists.toast.itemAddFailed'))
     }
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2">
       <Input
-        placeholder="Add an item…"
+        placeholder={t('lists.addItemPlaceholder')}
         value={text}
         onChange={(e) => setText(e.target.value)}
         autoFocus

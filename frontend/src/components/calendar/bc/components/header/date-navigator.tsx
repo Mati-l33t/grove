@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import { format } from "date-fns"
+import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useCalendar } from "../../contexts/calendar-context"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +15,7 @@ interface IProps {
 }
 
 export function DateNavigator({ view, events }: IProps) {
+  const { t } = useTranslation()
   const { selectedDate, setSelectedDate } = useCalendar()
   const month = format(selectedDate, "MMMM")
   const year = selectedDate.getFullYear()
@@ -29,7 +31,7 @@ export function DateNavigator({ view, events }: IProps) {
           {month} {year}
         </span>
         <Badge variant="outline" className="px-1.5">
-          {eventCount} {eventCount === 1 ? "event" : "events"}
+          {t("calendar.eventCount", { count: eventCount })}
         </Badge>
       </div>
       <div className="flex items-center gap-2">

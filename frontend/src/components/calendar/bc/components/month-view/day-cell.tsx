@@ -1,4 +1,5 @@
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { isToday, startOfDay } from "date-fns"
 import { useCalendar } from "../../contexts/calendar-context"
 import { EventBullet } from "./event-bullet"
@@ -17,6 +18,7 @@ interface IProps {
 const MAX_VISIBLE_EVENTS = 3
 
 export function DayCell({ cell, events, eventPositions }: IProps) {
+  const { t } = useTranslation()
   const { setSelectedDate, setView, firstDayOfWeek } = useCalendar()
   const { day, currentMonth, date } = cell
   const cellEvents = useMemo(() => getMonthCellEvents(date, events, eventPositions), [date, events, eventPositions])
@@ -59,7 +61,7 @@ export function DayCell({ cell, events, eventPositions }: IProps) {
         {cellEvents.length > MAX_VISIBLE_EVENTS && (
           <p className={cn("h-4.5 px-1.5 text-xs font-semibold text-muted-foreground", !currentMonth && "opacity-50")}>
             <span className="sm:hidden">+{cellEvents.length - MAX_VISIBLE_EVENTS}</span>
-            <span className="hidden sm:inline"> {cellEvents.length - MAX_VISIBLE_EVENTS} more...</span>
+            <span className="hidden sm:inline"> {t("calendar.moreEvents", { count: cellEvents.length - MAX_VISIBLE_EVENTS })}</span>
           </p>
         )}
       </div>

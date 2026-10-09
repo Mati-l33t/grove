@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/authStore'
 import { useHouseholdMembers } from '@/hooks/useHousehold'
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function SharePicker({ mode, selectedMembers, onChange, className }: Props) {
+  const { t } = useTranslation()
   const { user, household } = useAuthStore()
   const { data: members = [] } = useHouseholdMembers()
 
@@ -27,14 +29,14 @@ export default function SharePicker({ mode, selectedMembers, onChange, className
 
   return (
     <div className={cn('space-y-2', className)}>
-      <p className="text-sm font-medium">Visibility</p>
+      <p className="text-sm font-medium">{t('visibility.title')}</p>
       <div className="flex flex-wrap gap-2">
         {(['private', 'household', 'members'] as ShareMode[]).map((opt) => {
           if (opt === 'members' && others.length === 0) return null
           const labels: Record<ShareMode, string> = {
-            private: 'Only me',
-            household: household ? `${(household as { name?: string }).name || 'Household'}` : 'Household',
-            members: 'Specific people',
+            private: t('visibility.onlyMe'),
+            household: household ? `${(household as { name?: string }).name || t('visibility.household')}` : t('visibility.household'),
+            members: t('visibility.specific'),
           }
           return (
             <button
