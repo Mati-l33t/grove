@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -15,10 +16,12 @@ import snow          from '@meteocons/svg/fill/snow.svg'
 import stormDay      from '@meteocons/svg/fill/thunderstorms-day.svg'
 import stormNight    from '@meteocons/svg/fill/thunderstorms-night.svg'
 
+type WeatherKey = 'weather.clear' | 'weather.partlyCloudy' | 'weather.overcast' | 'weather.fog' | 'weather.drizzle' | 'weather.rain' | 'weather.freezingRain' | 'weather.snow' | 'weather.showers' | 'weather.snowShowers' | 'weather.thunderstorm'
+
 interface WeatherData {
   temp: number
   icon: string
-  description: string
+  description: WeatherKey
 }
 
 function isDay() {
@@ -26,18 +29,18 @@ function isDay() {
   return h >= 6 && h < 20
 }
 
-function wmoToWeather(code: number, day: boolean): { icon: string; description: string } {
-  if (code === 0)   return { icon: day ? clearDay  : clearNight,  description: 'Clear sky' }
-  if (code <= 2)    return { icon: day ? partlyDay : partlyNight, description: 'Partly cloudy' }
-  if (code === 3)   return { icon: overcast,                      description: 'Overcast' }
-  if (code <= 48)   return { icon: day ? fogDay    : fogNight,    description: 'Foggy' }
-  if (code <= 55)   return { icon: drizzle,                       description: 'Drizzle' }
-  if (code <= 65)   return { icon: rain,                          description: 'Rain' }
-  if (code <= 67)   return { icon: sleet,                         description: 'Freezing rain' }
-  if (code <= 77)   return { icon: snow,                          description: 'Snow' }
-  if (code <= 82)   return { icon: rain,                          description: 'Showers' }
-  if (code <= 86)   return { icon: snow,                          description: 'Snow showers' }
-  return                   { icon: day ? stormDay  : stormNight,  description: 'Thunderstorm' }
+function wmoToWeather(code: number, day: boolean): { icon: string; description: WeatherKey } {
+  if (code === 0)   return { icon: day ? clearDay  : clearNight,  description: 'weather.clear' }
+  if (code <= 2)    return { icon: day ? partlyDay : partlyNight, description: 'weather.partlyCloudy' }
+  if (code === 3)   return { icon: overcast,                      description: 'weather.overcast' }
+  if (code <= 48)   return { icon: day ? fogDay    : fogNight,    description: 'weather.fog' }
+  if (code <= 55)   return { icon: drizzle,                       description: 'weather.drizzle' }
+  if (code <= 65)   return { icon: rain,                          description: 'weather.rain' }
+  if (code <= 67)   return { icon: sleet,                         description: 'weather.freezingRain' }
+  if (code <= 77)   return { icon: snow,                          description: 'weather.snow' }
+  if (code <= 82)   return { icon: rain,                          description: 'weather.showers' }
+  if (code <= 86)   return { icon: snow,                          description: 'weather.snowShowers' }
+  return                   { icon: day ? stormDay  : stormNight,  description: 'weather.thunderstorm' }
 }
 
 async function getCoords(): Promise<{ lat: number; lon: number } | null> {
@@ -87,6 +90,7 @@ interface Props {
 }
 
 export default function WeatherWidget({ compact = false }: Props) {
+  const { t } = useTranslation()
   const { user } = useAuthStore()
   const unit = user?.weather_unit ?? 'celsius'
 
@@ -123,19 +127,19 @@ export default function WeatherWidget({ compact = false }: Props) {
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1.5 shrink-0 select-none" aria-label={`${weather.temp}${symbol}, ${weather.description}`}>
-        <img src={weather.icon} alt={weather.description} className="w-7 h-7 shrink-0" />
+      <div className="flex items-center gap-1.5 shrink-0 select-none" aria-label={`${weather.temp}${symbol}, ${t(weather.description)}`}>
+        <img src={weather.icon} alt={t(weather.description)} className="w-7 h-7 shrink-0" />
         <span className="text-sm font-semibold tabular-nums">{weather.temp}{symbol}</span>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-2.5 shrink-0 select-none" aria-label={`${weather.temp}${symbol}, ${weather.description}`}>
-      <img src={weather.icon} alt={weather.description} className="w-14 h-14 shrink-0" />
+    <div className="flex items-center gap-2.5 shrink-0 select-none" aria-label={`${weather.temp}${symbol}, ${t(weather.description)}`}>
+      <img src={weather.icon} alt={t(weather.description)} className="w-14 h-14 shrink-0" />
       <div className="text-right">
         <p className="text-xl font-semibold leading-none tabular-nums">{weather.temp}{symbol}</p>
-        <p className="text-xs text-muted-foreground mt-1">{weather.description}</p>
+        <p className="text-xs text-muted-foreground mt-1">{t(weather.description)}</p>
       </div>
     </div>
   )

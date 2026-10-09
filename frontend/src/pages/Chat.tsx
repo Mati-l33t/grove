@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { Bot, Plus, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
+import { mealLabel } from '@/lib/meals'
 import pb from '@/lib/pb'
 import TopBar from '@/components/layout/TopBar'
 import { Button } from '@/components/ui/button'
@@ -22,47 +25,71 @@ type Message = {
   loading?: boolean
 }
 
-function toolLabel(tr: ToolResult): string {
+function toolLabel(tr: ToolResult, t: TFunction): string {
   let parsed: Record<string, unknown> = {}
   const args = tr.args as Record<string, unknown>
   try { parsed = JSON.parse(tr.result) } catch { /* empty */ }
-  if (parsed.error) return `${tr.name} failed`
-  if (tr.name === 'get_members')      return 'Looked up household members'
-  if (tr.name === 'get_lists')        return 'Checked your lists'
-  if (tr.name === 'create_list')      return `Created list "${parsed.name ?? ''}"`
-  if (tr.name === 'get_list_items')   return 'Read list contents'
-  if (tr.name === 'add_list_item')    return `Added "${parsed.text ?? ''}" to list`
-  if (tr.name === 'check_list_item')  return `${parsed.checked ? 'Checked' : 'Unchecked'} item`
-  if (tr.name === 'delete_list_item') return 'Deleted item'
-  if (tr.name === 'get_today_events')    return "Checked today's calendar"
-  if (tr.name === 'get_upcoming_events') return `Checked upcoming events`
-  if (tr.name === 'create_event')     return `Created event "${parsed.title ?? ''}"`
-  if (tr.name === 'update_event')     return `Updated event "${parsed.title ?? ''}"`
-  if (tr.name === 'delete_event')     return 'Deleted event'
-  if (tr.name === 'update_list')      return `Updated list "${parsed.name ?? ''}"`
-  if (tr.name === 'archive_list')     return 'Archived list'
-  if (tr.name === 'delete_list')      return 'Deleted list'
-  if (tr.name === 'get_meal_plan')    return 'Checked the meal plan'
-  if (tr.name === 'set_meal_plan')    return `Planned ${String(parsed.meal_type ?? '')} on ${String(parsed.date ?? '')}`
-  if (tr.name === 'clear_meal_slot')  return `Cleared ${String(parsed.meal_type ?? '')} on ${String(parsed.date ?? '')}`
-  if (tr.name === 'add_recipe_ingredients_to_list') return `Added ${String(parsed.added ?? '')} ingredients to list`
-  if (tr.name === 'search_recipes')   return 'Searched recipes'
-  if (tr.name === 'suggest_meal_plan') return `Planned ${String((parsed.suggestions as unknown[])?.length ?? 0)} meals`
-  if (tr.name === 'get_recipes')         return 'Checked your recipes'
-  if (tr.name === 'create_recipe')       return `Saved recipe "${parsed.title ?? ''}"`
-  if (tr.name === 'add_recipe_from_url') return `Saved recipe "${parsed.title ?? ''}"`
-  if (tr.name === 'get_weather')              return `Checked weather for ${String(parsed.city ?? args.city ?? '')}`
-  if (tr.name === 'get_school_children')      return 'Looked up children'
-  if (tr.name === 'add_school_child')         return `Added child "${parsed.name ?? ''}"`
-  if (tr.name === 'get_school_schedule')      return 'Checked school schedule'
-  if (tr.name === 'set_school_schedule')      return parsed.cleared ? `Cleared ${String(args.day ?? '')} schedule` : `Set ${String(args.day ?? '')} hours`
-  if (tr.name === 'get_school_lunches')       return 'Checked school lunches'
-  if (tr.name === 'set_school_lunch')         return parsed.cleared ? `Cleared lunch for ${String(args.date ?? '')}` : `Set lunch for ${String(parsed.date ?? '')}`
-  if (tr.name === 'get_school_assignments')   return 'Checked assignments'
-  if (tr.name === 'add_school_assignment')    return `Added assignment "${parsed.title ?? ''}"`
-  if (tr.name === 'update_school_assignment') return parsed.done === true ? `Marked "${parsed.title ?? ''}" done` : `Updated assignment`
-  if (tr.name === 'delete_school_assignment') return 'Deleted assignment'
-  return tr.name
+  const str = (v: unknown) => String(v ?? '')
+  if (parsed.error) return t('chat.tool.failed', { name: tr.name })
+  switch (tr.name) {
+    case 'get_members':
+    case 'get_lists':
+    case 'get_list_items':
+    case 'delete_list_item':
+    case 'get_upcoming_events':
+    case 'delete_event':
+    case 'archive_list':
+    case 'delete_list':
+    case 'get_meal_plan':
+    case 'search_recipes':
+    case 'get_recipes':
+    case 'get_school_children':
+    case 'get_school_schedule':
+    case 'get_school_lunches':
+    case 'get_school_assignments':
+    case 'delete_school_assignment':
+      return t(`chat.tool.${tr.name}`)
+    case 'create_list':
+    case 'update_list':
+      return t(`chat.tool.${tr.name}`, { name: str(parsed.name) })
+    case 'add_list_item':
+      return t('chat.tool.add_list_item', { text: str(parsed.text) })
+    case 'check_list_item':
+      return parsed.checked ? t('chat.tool.check_list_item') : t('chat.tool.uncheck_list_item')
+    case 'create_event':
+    case 'update_event':
+      return t(`chat.tool.${tr.name}`, { title: str(parsed.title) })
+    case 'set_meal_plan':
+    case 'clear_meal_slot':
+      return t(`chat.tool.${tr.name}`, { meal: mealLabel(t, str(parsed.meal_type)), date: str(parsed.date) })
+    case 'add_recipe_ingredients_to_list':
+      return t('chat.tool.add_recipe_ingredients_to_list', { count: Number(parsed.added ?? 0) })
+    case 'suggest_meal_plan':
+      return t('chat.tool.suggest_meal_plan', { count: (parsed.suggestions as unknown[])?.length ?? 0 })
+    case 'create_recipe':
+    case 'add_recipe_from_url':
+      return t('chat.tool.create_recipe', { title: str(parsed.title) })
+    case 'get_weather':
+      return t('chat.tool.get_weather', { city: str(parsed.city ?? args.city) })
+    case 'add_school_child':
+      return t('chat.tool.add_school_child', { name: str(parsed.name) })
+    case 'set_school_schedule':
+      return parsed.cleared
+        ? t('chat.tool.clear_school_schedule', { day: str(args.day) })
+        : t('chat.tool.set_school_schedule', { day: str(args.day) })
+    case 'set_school_lunch':
+      return parsed.cleared
+        ? t('chat.tool.clear_school_lunch', { date: str(args.date) })
+        : t('chat.tool.set_school_lunch', { date: str(parsed.date) })
+    case 'add_school_assignment':
+      return t('chat.tool.add_school_assignment', { title: str(parsed.title) })
+    case 'update_school_assignment':
+      return parsed.done === true
+        ? t('chat.tool.done_school_assignment', { title: str(parsed.title) })
+        : t('chat.tool.update_school_assignment')
+    default:
+      return tr.name
+  }
 }
 
 function TypingDots() {
@@ -76,6 +103,7 @@ function TypingDots() {
 }
 
 export default function Chat() {
+  const { t } = useTranslation()
   const STORAGE_KEY = 'grove_chat_history'
 
   const { data: aiData, isLoading: modelsLoading } = useAiModels()
@@ -144,7 +172,7 @@ export default function Chat() {
       const msg =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: unknown }).message)
-          : 'Something went wrong.'
+          : t('chat.error')
       toast.error(msg)
     } finally {
       setSending(false)
@@ -161,7 +189,7 @@ export default function Chat() {
   const modelSelect = aiData?.models?.length ? (
     <Select value={model} onValueChange={setModel}>
       <SelectTrigger className="h-7 text-xs w-[160px] border-border/60 bg-muted/40 focus:ring-0 gap-1">
-        <span className="truncate">{model || 'Model'}</span>
+        <span className="truncate">{model || t('chat.model')}</span>
       </SelectTrigger>
       <SelectContent>
         {aiData.models.map((m) => (
@@ -175,7 +203,7 @@ export default function Chat() {
     <div className="flex items-center gap-1">
       {modelSelect}
       {messages.length > 0 && (
-        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleNewConversation} aria-label="New conversation">
+        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleNewConversation} aria-label={t('chat.newConversation')}>
           <Plus className="h-4 w-4" />
         </Button>
       )}
@@ -185,15 +213,15 @@ export default function Chat() {
   if (!modelsLoading && aiData && !aiData.enabled) {
     return (
       <>
-        <TopBar title="Assistant" />
+        <TopBar title={t('chat.title')} />
         <div className="flex flex-col items-center justify-center gap-4 text-center p-8 h-[calc(100dvh-7.5rem)] md:h-dvh">
           <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
             <Bot className="h-7 w-7 text-muted-foreground" />
           </div>
           <div>
-            <p className="font-semibold text-base">AI assistant not configured</p>
+            <p className="font-semibold text-base">{t('chat.notConfigured')}</p>
             <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-              An admin can configure the AI assistant under Admin → Settings.
+              {t('chat.notConfiguredHint')}
             </p>
           </div>
         </div>
@@ -203,7 +231,7 @@ export default function Chat() {
 
   return (
     <>
-      <TopBar title="Assistant" actions={topBarActions} />
+      <TopBar title={t('chat.title')} actions={topBarActions} />
 
       <div className="flex flex-col h-[calc(100dvh-7.5rem)] md:h-dvh max-w-2xl mx-auto w-full">
 
@@ -213,14 +241,14 @@ export default function Chat() {
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Bot className="h-4 w-4 text-primary" />
             </div>
-            <span className="font-semibold">Assistant</span>
+            <span className="font-semibold">{t('chat.title')}</span>
           </div>
           <div className="flex items-center gap-2">
             {modelSelect}
             {messages.length > 0 && (
               <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleNewConversation}>
                 <Plus className="h-3.5 w-3.5" />
-                New
+                {t('chat.new')}
               </Button>
             )}
           </div>
@@ -234,19 +262,19 @@ export default function Chat() {
                 <Bot className="h-7 w-7 text-primary" />
               </div>
               <div>
-                <p className="font-semibold">Grove Assistant</p>
+                <p className="font-semibold">{t('chat.name')}</p>
                 <p className="text-sm text-muted-foreground mt-1 max-w-xs">
-                  Ask me anything, or let me create lists, add items, and manage your calendar.
+                  {t('chat.intro')}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 justify-center mt-2">
                 {[
-                  "What's on my shopping list?",
-                  "Add milk to my shopping list",
-                  "What do I have today?",
-                  "What assignments does Emma have?",
-                  "Mark Emma's math homework as done",
-                  "Set this week's lunches for Emma",
+                  t('chat.suggestion1'),
+                  t('chat.suggestion2'),
+                  t('chat.suggestion3'),
+                  t('chat.suggestion4'),
+                  t('chat.suggestion5'),
+                  t('chat.suggestion6'),
                 ].map((s) => (
                   <button
                     key={s}
@@ -278,7 +306,7 @@ export default function Chat() {
                             : 'bg-primary/10 text-primary'
                         )}
                       >
-                        {isError ? '✗' : '✓'} {toolLabel(tr)}
+                        {isError ? '✗' : '✓'} {toolLabel(tr, t)}
                       </span>
                     )
                   })}
@@ -308,14 +336,14 @@ export default function Chat() {
           >
             <Input
               ref={inputRef}
-              placeholder="Message…"
+              placeholder={t('chat.messagePlaceholder')}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={sending}
               className="flex-1"
               autoComplete="off"
             />
-            <Button type="submit" size="icon" disabled={sending || !input.trim()} aria-label="Send">
+            <Button type="submit" size="icon" disabled={sending || !input.trim()} aria-label={t('chat.send')}>
               <Send className="h-4 w-4" />
             </Button>
           </form>

@@ -23,23 +23,19 @@ import {
   useToggleAssignment, useDeleteAssignment,
 } from '@/hooks/useSchool'
 import { useHouseholdMembers } from '@/hooks/useHousehold'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useAuthStore } from '@/stores/authStore'
 import pb from '@/lib/pb'
 import type { SchoolChild, SchoolAssignment, WeekDay, AssignmentType } from '@/types'
 
 const WEEKDAYS: WeekDay[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-const DAY_SHORT: Record<WeekDay, string> = {
-  monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri',
-}
 
 const CHILD_COLORS = [
   '#22c55e', '#3b82f6', '#f59e0b', '#ef4444',
   '#8b5cf6', '#ec4899', '#06b6d4', '#f97316',
 ]
 
-const TYPE_LABELS: Record<AssignmentType, string> = {
-  test: 'Test', homework: 'Homework', project: 'Project', other: 'Other',
-}
 const TYPE_COLORS: Record<AssignmentType, string> = {
   test: 'bg-red-500/15 text-red-600 dark:text-red-400',
   homework: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
@@ -47,15 +43,16 @@ const TYPE_COLORS: Record<AssignmentType, string> = {
   other: 'bg-muted text-muted-foreground',
 }
 
-function getDueLabel(dueDate: string): { label: string; urgent: boolean } {
+function getDueLabel(dueDate: string, t: TFunction): { label: string; urgent: boolean } {
   if (!dueDate) return { label: '', urgent: false }
   const d = parseISO(dueDate)
-  if (isToday(d)) return { label: 'Today', urgent: true }
-  if (isBefore(d, startOfToday())) return { label: `Overdue · ${format(d, 'MMM d')}`, urgent: true }
-  return { label: format(d, 'MMM d'), urgent: false }
+  if (isToday(d)) return { label: t('school.today'), urgent: true }
+  if (isBefore(d, startOfToday())) return { label: t('school.overdue', { date: format(d, t('school.formats.short')) }), urgent: true }
+  return { label: format(d, t('school.formats.short')), urgent: false }
 }
 
 export default function School() {
+  const { t } = useTranslation()
   const { user } = useAuthStore()
   const { data: members = [] } = useHouseholdMembers()
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null)
@@ -94,7 +91,7 @@ export default function School() {
   // Week dates (Mon–Fri)
   const weekStart = addDays(startOfWeek(startOfToday(), { weekStartsOn: 1 }), weekOffset * 7)
   const weekDates = WEEKDAYS.map((_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'))
-  const weekLabel = `${format(weekStart, 'MMM d')} – ${format(addDays(weekStart, 4), 'MMM d')}`
+  const weekLabel = `${format(weekStart, t('school.formats.short'))} – ${format(addDays(weekStart, 4), t('school.formats.short'))}`
 
   // Queries
   const { data: children = [], isLoading: childrenLoading } = useSchoolChildren()
@@ -161,27 +158,27 @@ export default function School() {
     try {
       if (editingChild) {
         await updateChild.mutateAsync({ id: editingChild.id, name: childName.trim(), school_name: childSchool.trim(), grade: childGrade.trim(), color: childColor, userId: childOwner || undefined })
-        toast.success('Child updated.')
+        toast.success(t('school.toast.childUpdated'))
       } else {
         const record = await createChild.mutateAsync({ name: childName.trim(), school_name: childSchool.trim(), grade: childGrade.trim(), color: childColor, userId: childOwner || undefined })
         setSelectedChildId((record as { id: string }).id)
-        toast.success('Child added.')
+        toast.success(t('school.toast.childAdded'))
       }
       setChildDialogOpen(false)
     } catch {
-      toast.error('Failed to save.')
+      toast.error(t('school.toast.saveFailed'))
     }
   }
 
   async function handleDeleteChild(child: SchoolChild, e: React.MouseEvent) {
     e.stopPropagation()
-    if (!confirm(`Remove ${child.name}? This will delete all their school data.`)) return
+    if (!confirm(t('school.confirmRemoveChild', { name: child.name }))) return
     try {
       await deleteChild.mutateAsync(child.id)
       if (selectedChildId === child.id) setSelectedChildId(null)
-      toast.success('Child removed.')
+      toast.success(t('school.toast.childRemoved'))
     } catch {
-      toast.error('Failed to remove.')
+      toast.error(t('school.toast.removeFailed'))
     }
   }
 
@@ -202,8 +199,8 @@ export default function School() {
       if (existing) {
         try {
           await deleteSchedule.mutateAsync({ id: existing.id, childId: selectedChildId })
-          toast.success('Schedule cleared.')
-        } catch { toast.error('Failed to clear.') }
+          toast.success(t('school.toast.scheduleCleared'))
+        } catch { toast.error(t('school.toast.clearFailed')) }
       }
       setScheduleDialogOpen(false)
       return
@@ -214,10 +211,10 @@ export default function School() {
         start_time: scheduleStart, end_time: scheduleEnd,
         existingId: existing?.id,
       })
-      toast.success('Schedule saved.')
+      toast.success(t('school.toast.scheduleSaved'))
       setScheduleDialogOpen(false)
     } catch {
-      toast.error('Failed to save.')
+      toast.error(t('school.toast.saveFailed'))
     }
   }
 
@@ -237,18 +234,18 @@ export default function School() {
       if (existing) {
         try {
           await deleteLunch.mutateAsync({ id: existing.id, childId: selectedChildId })
-          toast.success('Lunch cleared.')
-        } catch { toast.error('Failed to clear.') }
+          toast.success(t('school.toast.lunchCleared'))
+        } catch { toast.error(t('school.toast.clearFailed')) }
       }
       setLunchDialogOpen(false)
       return
     }
     try {
       await upsertLunch.mutateAsync({ childId: selectedChildId, date: lunchDate, meal: lunchMeal.trim(), existingId: existing?.id })
-      toast.success('Lunch saved.')
+      toast.success(t('school.toast.lunchSaved'))
       setLunchDialogOpen(false)
     } catch {
-      toast.error('Failed to save.')
+      toast.error(t('school.toast.saveFailed'))
     }
   }
 
@@ -283,17 +280,17 @@ export default function School() {
           subject: assignSubject.trim(), title: assignTitle.trim(),
           type: assignType, due_date: assignDue, notes: assignNotes.trim(),
         })
-        toast.success('Assignment updated.')
+        toast.success(t('school.toast.assignmentUpdated'))
       } else {
         await createAssignment.mutateAsync({
           childId: selectedChildId, subject: assignSubject.trim(), title: assignTitle.trim(),
           type: assignType, due_date: assignDue, notes: assignNotes.trim(),
         })
-        toast.success('Assignment added.')
+        toast.success(t('school.toast.assignmentAdded'))
       }
       setAssignDialogOpen(false)
     } catch {
-      toast.error('Failed to save.')
+      toast.error(t('school.toast.saveFailed'))
     }
   }
 
@@ -301,17 +298,17 @@ export default function School() {
     try {
       await toggleAssignment.mutateAsync({ id: a.id, childId: a.child, done: !a.done })
     } catch {
-      toast.error('Failed to update.')
+      toast.error(t('school.toast.updateFailed'))
     }
   }
 
   async function handleDeleteAssignment(a: SchoolAssignment) {
-    if (!confirm(`Delete "${a.title}"?`)) return
+    if (!confirm(t('school.confirmDeleteAssignment', { title: a.title }))) return
     try {
       await deleteAssignment.mutateAsync({ id: a.id, childId: a.child })
-      toast.success('Deleted.')
+      toast.success(t('school.toast.deleted'))
     } catch {
-      toast.error('Failed to delete.')
+      toast.error(t('school.toast.deleteFailed'))
     }
   }
 
@@ -319,7 +316,7 @@ export default function School() {
 
   return (
     <>
-      <TopBar title="School" />
+      <TopBar title={t('school.title')} />
 
       <div className="max-w-5xl mx-auto w-full p-4 md:px-8 space-y-6">
 
@@ -363,14 +360,14 @@ export default function School() {
                       <button
                         onClick={(e) => openEditChild(child, e)}
                         className="h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-                        aria-label="Edit child"
+                        aria-label={t('school.editChild')}
                       >
                         <Pencil className="h-3 w-3" />
                       </button>
                       <button
                         onClick={(e) => handleDeleteChild(child, e)}
                         className="h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive"
-                        aria-label="Remove child"
+                        aria-label={t('school.removeChild')}
                       >
                         <Trash2 className="h-3 w-3" />
                       </button>
@@ -383,7 +380,7 @@ export default function School() {
                 className="flex items-center gap-1.5 rounded-full border border-dashed px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
-                Add child
+                {t('school.addChild')}
               </button>
             </>
           )}
@@ -393,11 +390,11 @@ export default function School() {
         {!childrenLoading && children.length === 0 && (
           <div className="rounded-xl border border-dashed p-12 text-center space-y-3">
             <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground/40" />
-            <p className="text-sm font-medium text-muted-foreground">No children added yet</p>
-            <p className="text-xs text-muted-foreground">Add a child to track their school schedule, lunches, and assignments.</p>
+            <p className="text-sm font-medium text-muted-foreground">{t('school.noChildren')}</p>
+            <p className="text-xs text-muted-foreground">{t('school.noChildrenHint')}</p>
             <Button size="sm" onClick={openAddChild}>
               <Plus className="h-4 w-4 mr-1" />
-              Add child
+              {t('school.addChild')}
             </Button>
           </div>
         )}
@@ -409,13 +406,13 @@ export default function School() {
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
-                  Week schedule
+                  {t('school.weekSchedule')}
                 </h2>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setWeekOffset((n) => n - 1)}
                     className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-                    aria-label="Previous week"
+                    aria-label={t('school.previousWeek')}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -423,7 +420,7 @@ export default function School() {
                   <button
                     onClick={() => setWeekOffset((n) => n + 1)}
                     className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-                    aria-label="Next week"
+                    aria-label={t('school.nextWeek')}
                   >
                     <ChevronRight className="h-4 w-4" />
                   </button>
@@ -453,10 +450,10 @@ export default function School() {
                         )}
                       >
                         <p className={cn('text-xs font-semibold', isCurrentDay ? 'text-primary' : 'text-muted-foreground')}>
-                          {DAY_SHORT[day]}
+                          {t(`school.day.${day}`)}
                         </p>
                         <p className={cn('text-xs', isCurrentDay ? 'text-primary/80' : 'text-muted-foreground/70')}>
-                          {format(dateObj, 'MMM d')}
+                          {format(dateObj, t('school.formats.short'))}
                         </p>
                       </div>
                       <button
@@ -468,7 +465,7 @@ export default function School() {
                             {schedule.start_time || '?'} – {schedule.end_time || '?'}
                           </p>
                         ) : (
-                          <p className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">Set hours</p>
+                          <p className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground transition-colors">{t('school.setHours')}</p>
                         )}
                       </button>
                       <button
@@ -480,7 +477,7 @@ export default function School() {
                         ) : (
                           <p className="text-xs text-muted-foreground/50 group-hover:text-muted-foreground transition-colors flex items-center gap-1">
                             <UtensilsCrossed className="h-3 w-3" />
-                            Add lunch
+                            {t('school.addLunch')}
                           </p>
                         )}
                       </button>
@@ -510,16 +507,16 @@ export default function School() {
                         isCurrentDay ? 'bg-primary/10' : 'bg-muted/30'
                       )}>
                         <p className={cn('text-sm font-semibold w-8', isCurrentDay ? 'text-primary' : 'text-foreground')}>
-                          {DAY_SHORT[day]}
+                          {t(`school.day.${day}`)}
                         </p>
-                        <p className="text-xs text-muted-foreground">{format(dateObj, 'MMMM d')}</p>
+                        <p className="text-xs text-muted-foreground">{format(dateObj, t('school.formats.long'))}</p>
                       </div>
                       <div className="flex divide-x">
                         <button
                           onClick={() => openSchedule(day)}
                           className="flex-1 min-w-0 px-3 py-2.5 text-left hover:bg-accent/30 transition-colors group"
                         >
-                          <p className="text-xs text-muted-foreground mb-0.5">Hours</p>
+                          <p className="text-xs text-muted-foreground mb-0.5">{t('school.hours')}</p>
                           {schedule?.start_time || schedule?.end_time ? (
                             <p className="text-xs font-medium break-words">{schedule.start_time || '?'} – {schedule.end_time || '?'}</p>
                           ) : (
@@ -530,7 +527,7 @@ export default function School() {
                           onClick={() => openLunch(date)}
                           className="flex-1 min-w-0 px-3 py-2.5 text-left hover:bg-accent/30 transition-colors group"
                         >
-                          <p className="text-xs text-muted-foreground mb-0.5">Lunch</p>
+                          <p className="text-xs text-muted-foreground mb-0.5">{t('school.lunch')}</p>
                           {lunch?.meal ? (
                             <p className="text-xs font-medium break-words">{lunch.meal}</p>
                           ) : (
@@ -549,11 +546,11 @@ export default function School() {
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <BookOpen className="h-3.5 w-3.5" />
-                  Assignments
+                  {t('school.assignments')}
                 </h2>
                 <Button size="sm" variant="outline" onClick={openAddAssignment}>
                   <Plus className="h-3.5 w-3.5 mr-1" />
-                  Add
+                  {t('school.add')}
                 </Button>
               </div>
 
@@ -570,7 +567,9 @@ export default function School() {
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                     )}
                   >
-                    {tab === 'upcoming' ? `Upcoming${upcoming.length > 0 ? ` (${upcoming.length})` : ''}` : `Done${done.length > 0 ? ` (${done.length})` : ''}`}
+                    {tab === 'upcoming'
+                      ? (upcoming.length > 0 ? t('school.upcomingCount', { count: upcoming.length }) : t('school.upcoming'))
+                      : (done.length > 0 ? t('school.doneCount', { count: done.length }) : t('school.done'))}
                   </button>
                 ))}
               </div>
@@ -579,21 +578,21 @@ export default function School() {
                 <div className="rounded-lg border border-dashed p-6 text-center">
                   <ClipboardList className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    {showDone ? 'No completed assignments' : 'No upcoming assignments'}
+                    {showDone ? t('school.noCompleted') : t('school.noUpcoming')}
                   </p>
                   {!showDone && (
                     <button
                       className="mt-2 text-xs text-primary hover:underline"
                       onClick={openAddAssignment}
                     >
-                      + Add assignment
+                      {t('school.addAssignmentLink')}
                     </button>
                   )}
                 </div>
               ) : (
                 <div className="space-y-2">
                   {displayedAssignments.map((a) => {
-                    const { label: dueLabel, urgent } = getDueLabel(a.due_date)
+                    const { label: dueLabel, urgent } = getDueLabel(a.due_date, t)
                     return (
                       <div
                         key={a.id}
@@ -605,7 +604,7 @@ export default function School() {
                         <button
                           onClick={() => handleToggle(a)}
                           className="mt-0.5 flex-shrink-0 text-muted-foreground hover:text-primary transition-colors"
-                          aria-label={a.done ? 'Mark as not done' : 'Mark as done'}
+                          aria-label={a.done ? t('school.markNotDone') : t('school.markDone')}
                         >
                           {a.done
                             ? <CheckCircle2 className="h-5 w-5 text-primary" />
@@ -614,7 +613,7 @@ export default function School() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                             <span className={cn('inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold', TYPE_COLORS[a.type || 'other'])}>
-                              {TYPE_LABELS[a.type || 'other']}
+                              {t(`school.type.${a.type || 'other'}`)}
                             </span>
                             {a.subject && (
                               <span className="text-xs text-muted-foreground">{a.subject}</span>
@@ -634,14 +633,14 @@ export default function School() {
                           <button
                             onClick={() => openEditAssignment(a)}
                             className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
-                            aria-label="Edit"
+                            aria-label={t('common.edit')}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteAssignment(a)}
                             className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-accent/50 transition-colors"
-                            aria-label="Delete"
+                            aria-label={t('common.delete')}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -660,13 +659,13 @@ export default function School() {
       <Dialog open={childDialogOpen} onOpenChange={setChildDialogOpen}>
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingChild ? 'Edit child' : 'Add child'}</DialogTitle>
+            <DialogTitle>{editingChild ? t('school.editChild') : t('school.addChild')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveChild} className="space-y-4">
             {/* Member picker — shown when in a household */}
             {members.length > 0 && (
               <div className="space-y-1.5">
-                <Label>Household member</Label>
+                <Label>{t('school.householdMember')}</Label>
                 <div className="rounded-md border divide-y max-h-44 overflow-y-auto">
                   {[user!, ...members.filter((m) => m.id !== user?.id)].map((m) => (
                     <button
@@ -691,7 +690,7 @@ export default function School() {
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium flex-1 truncate">
-                        {m.name}{m.id === user?.id ? ' (you)' : ''}
+                        {m.id === user?.id ? t('common.you', { name: m.name }) : m.name}
                       </span>
                       {childOwner === m.id && (
                         <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
@@ -702,36 +701,36 @@ export default function School() {
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="child-name">Display name</Label>
+              <Label htmlFor="child-name">{t('school.displayName')}</Label>
               <Input
                 id="child-name"
                 value={childName}
                 onChange={(e) => setChildName(e.target.value)}
-                placeholder="Emma"
+                placeholder={t('school.namePlaceholder')}
                 autoFocus={members.length === 0}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="child-school">School</Label>
+              <Label htmlFor="child-school">{t('school.school')}</Label>
               <Input
                 id="child-school"
                 value={childSchool}
                 onChange={(e) => setChildSchool(e.target.value)}
-                placeholder="Lincoln Elementary"
+                placeholder={t('school.schoolPlaceholder')}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="child-grade">Grade / Class</Label>
+              <Label htmlFor="child-grade">{t('school.gradeClass')}</Label>
               <Input
                 id="child-grade"
                 value={childGrade}
                 onChange={(e) => setChildGrade(e.target.value)}
-                placeholder="3rd grade"
+                placeholder={t('school.gradePlaceholder')}
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Color</Label>
+              <Label>{t('school.color')}</Label>
               <div className="flex gap-2 flex-wrap">
                 {CHILD_COLORS.map((c) => (
                   <button
@@ -750,10 +749,10 @@ export default function School() {
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="outline" onClick={() => setChildDialogOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={createChild.isPending || updateChild.isPending}>
-                {editingChild ? 'Save' : 'Add'}
+                {editingChild ? t('common.save') : t('school.add')}
               </Button>
             </div>
           </form>
@@ -765,13 +764,13 @@ export default function School() {
         <DialogContent className="max-w-xs">
           <DialogHeader>
             <DialogTitle>
-              {scheduleDay.charAt(0).toUpperCase() + scheduleDay.slice(1)} hours
+              {t('school.dayHours', { day: t(`school.dayFull.${scheduleDay}`) })}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveSchedule} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="sched-start">Start</Label>
+                <Label htmlFor="sched-start">{t('school.start')}</Label>
                 <Input
                   id="sched-start"
                   type="time"
@@ -780,7 +779,7 @@ export default function School() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="sched-end">End</Label>
+                <Label htmlFor="sched-end">{t('school.end')}</Label>
                 <Input
                   id="sched-end"
                   type="time"
@@ -789,13 +788,13 @@ export default function School() {
                 />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Leave both empty to mark this day as no school.</p>
+            <p className="text-xs text-muted-foreground">{t('school.noSchoolHint')}</p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setScheduleDialogOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={upsertSchedule.isPending || deleteSchedule.isPending}>
-                Save
+                {t('common.save')}
               </Button>
             </div>
           </form>
@@ -807,27 +806,27 @@ export default function School() {
         <DialogContent className="max-w-xs">
           <DialogHeader>
             <DialogTitle>
-              Lunch · {lunchDate ? format(parseISO(lunchDate), 'EEE MMM d') : ''}
+              {t('school.lunchTitle', { date: lunchDate ? format(parseISO(lunchDate), t('school.formats.lunchDay')) : '' })}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveLunch} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="lunch-meal">Meal</Label>
+              <Label htmlFor="lunch-meal">{t('school.meal')}</Label>
               <Input
                 id="lunch-meal"
                 value={lunchMeal}
                 onChange={(e) => setLunchMeal(e.target.value)}
-                placeholder="Pasta bolognese"
+                placeholder={t('school.mealPlaceholder')}
                 autoFocus
               />
             </div>
-            <p className="text-xs text-muted-foreground">Leave empty to clear the lunch for this day.</p>
+            <p className="text-xs text-muted-foreground">{t('school.clearLunchHint')}</p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setLunchDialogOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={upsertLunch.isPending || deleteLunch.isPending}>
-                Save
+                {t('common.save')}
               </Button>
             </div>
           </form>
@@ -838,47 +837,47 @@ export default function School() {
       <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingAssignment ? 'Edit assignment' : 'Add assignment'}</DialogTitle>
+            <DialogTitle>{editingAssignment ? t('school.editAssignment') : t('school.addAssignment')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveAssignment} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="assign-type">Type</Label>
+                <Label htmlFor="assign-type">{t('school.type_')}</Label>
                 <Select value={assignType} onValueChange={(v) => setAssignType(v as AssignmentType)}>
                   <SelectTrigger id="assign-type">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="homework">Homework</SelectItem>
-                    <SelectItem value="test">Test</SelectItem>
-                    <SelectItem value="project">Project</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="homework">{t('school.type.homework')}</SelectItem>
+                    <SelectItem value="test">{t('school.type.test')}</SelectItem>
+                    <SelectItem value="project">{t('school.type.project')}</SelectItem>
+                    <SelectItem value="other">{t('school.type.other')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="assign-subject">Subject</Label>
+                <Label htmlFor="assign-subject">{t('school.subject')}</Label>
                 <Input
                   id="assign-subject"
                   value={assignSubject}
                   onChange={(e) => setAssignSubject(e.target.value)}
-                  placeholder="Math"
+                  placeholder={t('school.subjectPlaceholder')}
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="assign-title">Title</Label>
+              <Label htmlFor="assign-title">{t('school.title_')}</Label>
               <Input
                 id="assign-title"
                 value={assignTitle}
                 onChange={(e) => setAssignTitle(e.target.value)}
-                placeholder="Chapter 5 exercises"
+                placeholder={t('school.titlePlaceholder')}
                 autoFocus
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="assign-due">Due date</Label>
+              <Label htmlFor="assign-due">{t('school.dueDate')}</Label>
               <Input
                 id="assign-due"
                 type="date"
@@ -887,21 +886,21 @@ export default function School() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="assign-notes">Notes</Label>
+              <Label htmlFor="assign-notes">{t('school.notes')}</Label>
               <Textarea
                 id="assign-notes"
                 value={assignNotes}
                 onChange={(e) => setAssignNotes(e.target.value)}
-                placeholder="Any extra details…"
+                placeholder={t('school.notesPlaceholder')}
                 rows={2}
               />
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setAssignDialogOpen(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={createAssignment.isPending || updateAssignment.isPending}>
-                {editingAssignment ? 'Save' : 'Add'}
+                {editingAssignment ? t('common.save') : t('school.add')}
               </Button>
             </div>
           </form>
