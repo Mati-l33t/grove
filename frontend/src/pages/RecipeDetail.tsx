@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Edit2, Trash2, Plus, X, Clock, Users, ShoppingCart, Camera,
 } from 'lucide-react'
@@ -42,6 +43,7 @@ function formatIngredient(ing: Ingredient): string {
 }
 
 export default function RecipeDetail() {
+  const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -159,11 +161,11 @@ export default function RecipeDetail() {
           })
         )
       )
-      toast.success(`${toAdd.length} ingredient${toAdd.length > 1 ? 's' : ''} added to list.`)
+      toast.success(t('recipes.toast.ingredientsAdded', { count: toAdd.length }))
       setShowAddToList(false)
       navigate(`/lists/${selectedListId}`)
     } catch {
-      toast.error('Failed to add ingredients.')
+      toast.error(t('recipes.toast.ingredientsFailed'))
     } finally {
       setAddingToList(false)
     }
@@ -225,7 +227,7 @@ export default function RecipeDetail() {
           sharedWith,
           imageFile: imageFile ?? undefined,
         })
-        toast.success('Recipe created.')
+        toast.success(t('recipes.toast.created'))
         navigate(`/recipes/${result.id}`)
       } else {
         await updateRecipe.mutateAsync({
@@ -244,7 +246,7 @@ export default function RecipeDetail() {
             imageFile: imageFile ?? undefined,
           },
         })
-        toast.success('Recipe saved.')
+        toast.success(t('recipes.toast.saved'))
         navigate(`/recipes/${id}`)
       }
     } catch (err) {
@@ -253,7 +255,7 @@ export default function RecipeDetail() {
       const fieldMsgs = fieldErrors
         ? Object.values(fieldErrors).map((v) => v.message).join('; ')
         : ''
-      toast.error(fieldMsgs || pbErr.data?.message || pbErr.message || 'Failed to save recipe.')
+      toast.error(fieldMsgs || pbErr.data?.message || pbErr.message || t('recipes.toast.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -262,10 +264,10 @@ export default function RecipeDetail() {
   async function handleDelete() {
     try {
       await deleteRecipe.mutateAsync(id!)
-      toast.success('Recipe deleted.')
+      toast.success(t('recipes.toast.deleted'))
       navigate('/recipes')
     } catch {
-      toast.error('Failed to delete recipe.')
+      toast.error(t('recipes.toast.deleteFailed'))
     }
   }
 
@@ -286,10 +288,10 @@ export default function RecipeDetail() {
     return (
       <>
         <TopBar
-          title={isNew ? 'New recipe' : 'Edit recipe'}
+          title={isNew ? t('recipes.newRecipe') : t('recipes.editRecipe')}
           actions={
             <Button size="sm" onClick={handleSave} disabled={saving || !title.trim()}>
-              {saving ? 'Saving…' : 'Save'}
+              {saving ? t('common.saving') : t('common.save')}
             </Button>
           }
         />
@@ -302,11 +304,11 @@ export default function RecipeDetail() {
             onClick={() => imageRef.current?.click()}
           >
             {displayImage ? (
-              <img src={displayImage} alt="Recipe" className="w-full h-full object-cover" />
+              <img src={displayImage} alt={t('recipes.photoAlt')} className="w-full h-full object-cover" />
             ) : (
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Camera className="h-8 w-8" />
-                <span className="text-sm">Add photo</span>
+                <span className="text-sm">{t('recipes.addPhoto')}</span>
               </div>
             )}
             {displayImage && (
@@ -319,30 +321,30 @@ export default function RecipeDetail() {
 
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="recipe-title">Title</Label>
+            <Label htmlFor="recipe-title">{t('recipes.name')}</Label>
             <Input
               id="recipe-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Recipe name"
+              placeholder={t('recipes.namePlaceholder')}
             />
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="recipe-desc">Description</Label>
+            <Label htmlFor="recipe-desc">{t('recipes.description')}</Label>
             <Input
               id="recipe-desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Short description (optional)"
+              placeholder={t('recipes.descriptionPlaceholder')}
             />
           </div>
 
           {/* Times + servings */}
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="prep-time">Prep (min)</Label>
+              <Label htmlFor="prep-time">{t('recipes.prepMin')}</Label>
               <Input
                 id="prep-time"
                 type="number"
@@ -353,7 +355,7 @@ export default function RecipeDetail() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cook-time">Cook (min)</Label>
+              <Label htmlFor="cook-time">{t('recipes.cookMin')}</Label>
               <Input
                 id="cook-time"
                 type="number"
@@ -364,7 +366,7 @@ export default function RecipeDetail() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="servings">Servings</Label>
+              <Label htmlFor="servings">{t('recipes.servings')}</Label>
               <Input
                 id="servings"
                 type="number"
@@ -378,23 +380,23 @@ export default function RecipeDetail() {
 
           {/* Ingredients */}
           <div className="space-y-3">
-            <Label>Ingredients</Label>
+            <Label>{t('recipes.ingredients')}</Label>
             {ingredients.map((ing, i) => (
               <div key={i} className="flex gap-2 items-center">
                 <Input
-                  placeholder="Amt"
+                  placeholder={t('recipes.amountPlaceholder')}
                   value={ing.amount}
                   onChange={(e) => updateIngredient(i, 'amount', e.target.value)}
                   className="w-16 shrink-0"
                 />
                 <Input
-                  placeholder="Unit"
+                  placeholder={t('recipes.unitPlaceholder')}
                   value={ing.unit}
                   onChange={(e) => updateIngredient(i, 'unit', e.target.value)}
                   className="w-20 shrink-0"
                 />
                 <Input
-                  placeholder="Ingredient"
+                  placeholder={t('recipes.ingredientPlaceholder')}
                   value={ing.name}
                   onChange={(e) => updateIngredient(i, 'name', e.target.value)}
                   className="flex-1"
@@ -412,25 +414,25 @@ export default function RecipeDetail() {
             ))}
             <Button type="button" variant="outline" size="sm" className="gap-1" onClick={addIngredient}>
               <Plus className="h-4 w-4" />
-              Add ingredient
+              {t('recipes.addIngredient')}
             </Button>
           </div>
 
           {/* Instructions */}
           <div className="space-y-2">
-            <Label htmlFor="instructions">Instructions</Label>
+            <Label htmlFor="instructions">{t('recipes.instructions')}</Label>
             <Textarea
               id="instructions"
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Step-by-step instructions…"
+              placeholder={t('recipes.instructionsPlaceholder')}
               className="min-h-[160px]"
             />
           </div>
 
           {/* Tags */}
           <div className="space-y-2">
-            <Label htmlFor="tag-input">Tags</Label>
+            <Label htmlFor="tag-input">{t('recipes.tags')}</Label>
             <div className="flex flex-wrap gap-1 mb-2">
               {tags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="gap-1 pr-1">
@@ -447,7 +449,7 @@ export default function RecipeDetail() {
             </div>
             <Input
               id="tag-input"
-              placeholder="Add tag, press Enter"
+              placeholder={t('recipes.tagPlaceholder')}
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKeyDown}
@@ -462,13 +464,13 @@ export default function RecipeDetail() {
 
           <div className="flex gap-3 pt-2">
             <Button onClick={handleSave} disabled={saving || !title.trim()}>
-              {saving ? 'Saving…' : isNew ? 'Create recipe' : 'Save changes'}
+              {saving ? t('common.saving') : isNew ? t('recipes.createRecipe') : t('settings.saveChanges')}
             </Button>
             <Button
               variant="ghost"
               onClick={() => navigate(isNew ? '/recipes' : `/recipes/${id}`)}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
           </div>
         </div>
@@ -480,7 +482,7 @@ export default function RecipeDetail() {
   if (isLoading) {
     return (
       <>
-        <TopBar title="Recipe" />
+        <TopBar title={t('recipes.recipe')} />
         <div className="max-w-2xl mx-auto p-4 space-y-4">
           <Skeleton className="aspect-video w-full rounded-xl" />
           <Skeleton className="h-8 w-2/3" />
@@ -494,9 +496,9 @@ export default function RecipeDetail() {
   if (!recipe) {
     return (
       <>
-        <TopBar title="Recipe" />
+        <TopBar title={t('recipes.recipe')} />
         <div className="flex items-center justify-center h-64 text-muted-foreground">
-          Recipe not found.
+          {t('recipes.notFound')}
         </div>
       </>
     )
@@ -515,15 +517,15 @@ export default function RecipeDetail() {
       {shoppingLists.length > 0 && (
         <Button variant="outline" size="sm" className="gap-1" onClick={openAddToList}>
           <ShoppingCart className="h-4 w-4" />
-          <span className="hidden sm:inline">Add to list</span>
+          <span className="hidden sm:inline">{t('recipes.addToList')}</span>
         </Button>
       )}
       {canEdit && permissions.recipes && (
         <>
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/recipes/${id}/edit`)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(`/recipes/${id}/edit`)} aria-label={t('recipes.editAria')}>
             <Edit2 className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDelete(true)}>
+          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setShowDelete(true)} aria-label={t('recipes.deleteAria')}>
             <Trash2 className="h-4 w-4" />
           </Button>
         </>
@@ -540,7 +542,7 @@ export default function RecipeDetail() {
         <div className="hidden md:flex items-center gap-2 p-4 pb-0">
           <Button variant="ghost" size="sm" className="gap-1 -ml-2" onClick={() => navigate('/recipes')}>
             <ArrowLeft className="h-4 w-4" />
-            Recipes
+            {t('recipes.title')}
           </Button>
         </div>
 
@@ -568,29 +570,29 @@ export default function RecipeDetail() {
             {recipe.prep_time > 0 && (
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Prep: {recipe.prep_time}m</span>
+                <span>{t('recipes.prep', { minutes: recipe.prep_time })}</span>
               </div>
             )}
             {recipe.cook_time > 0 && (
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Cook: {recipe.cook_time}m</span>
+                <span>{t('recipes.cook', { minutes: recipe.cook_time })}</span>
               </div>
             )}
             {totalTime > 0 && recipe.prep_time > 0 && recipe.cook_time > 0 && (
               <div className="flex items-center gap-1.5 font-medium">
                 <Clock className="h-4 w-4" />
-                <span>Total: {totalTime}m</span>
+                <span>{t('recipes.total', { minutes: totalTime })}</span>
               </div>
             )}
             {recipe.servings > 0 && (
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Users className="h-4 w-4" />
-                <span>{recipe.servings} servings</span>
+                <span>{t('recipes.servingsCount', { count: recipe.servings })}</span>
               </div>
             )}
             {recipe.household && (
-              <Badge variant="secondary">Shared</Badge>
+              <Badge variant="secondary">{t('recipes.shared')}</Badge>
             )}
           </div>
 
@@ -608,7 +610,7 @@ export default function RecipeDetail() {
             <div className="md:hidden">
               <Button variant="outline" className="gap-2 w-full" onClick={openAddToList}>
                 <ShoppingCart className="h-4 w-4" />
-                Add ingredients to shopping list
+                {t('recipes.addToShoppingList')}
               </Button>
             </div>
           )}
@@ -618,7 +620,7 @@ export default function RecipeDetail() {
           {/* Ingredients */}
           {viewIngredients.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold">Ingredients</h2>
+              <h2 className="text-lg font-semibold">{t('recipes.ingredients')}</h2>
               <ul className="space-y-2">
                 {viewIngredients.map((ing, i) => (
                   <li key={i} className="flex items-baseline gap-2 text-sm">
@@ -639,7 +641,7 @@ export default function RecipeDetail() {
             <>
               <Separator />
               <div className="space-y-3">
-                <h2 className="text-lg font-semibold">Instructions</h2>
+                <h2 className="text-lg font-semibold">{t('recipes.instructions')}</h2>
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{recipe.instructions}</p>
               </div>
             </>
@@ -651,14 +653,14 @@ export default function RecipeDetail() {
       <Dialog open={showDelete} onOpenChange={setShowDelete}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete recipe?</DialogTitle>
+            <DialogTitle>{t('recipes.deleteQuestion')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            This will permanently delete "{recipe.title}". This cannot be undone.
+            {t('recipes.deleteWarning', { title: recipe.title })}
           </p>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowDelete(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            <Button variant="ghost" onClick={() => setShowDelete(false)}>{t('common.cancel')}</Button>
+            <Button variant="destructive" onClick={handleDelete}>{t('common.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -667,15 +669,15 @@ export default function RecipeDetail() {
       <Dialog open={showAddToList} onOpenChange={setShowAddToList}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add ingredients to list</DialogTitle>
+            <DialogTitle>{t('recipes.addIngredientsToList')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Shopping list</Label>
+              <Label>{t('recipes.shoppingList')}</Label>
               <Select value={selectedListId} onValueChange={setSelectedListId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pick a list…" />
+                  <SelectValue placeholder={t('recipes.pickList')} />
                 </SelectTrigger>
                 <SelectContent>
                   {shoppingLists.map((list) => (
@@ -711,12 +713,12 @@ export default function RecipeDetail() {
           </div>
 
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowAddToList(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setShowAddToList(false)}>{t('common.cancel')}</Button>
             <Button
               onClick={handleAddToList}
               disabled={addingToList || selectedIngredients.size === 0 || !selectedListId}
             >
-              {addingToList ? 'Adding…' : `Add ${selectedIngredients.size} item${selectedIngredients.size !== 1 ? 's' : ''}`}
+              {addingToList ? t('recipes.adding') : t('recipes.addItems', { count: selectedIngredients.size })}
             </Button>
           </DialogFooter>
         </DialogContent>

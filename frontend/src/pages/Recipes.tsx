@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Link2, Plus, Search, UtensilsCrossed } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { useRecipes } from '@/hooks/useRecipes'
 import { useAuthStore } from '@/stores/authStore'
 import pb from '@/lib/pb'
@@ -15,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 type Filter = 'all' | 'mine' | 'shared'
 
 export default function Recipes() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, permissions } = useAuthStore()
   const { data: recipes, isLoading } = useRecipes()
@@ -39,7 +41,7 @@ export default function Recipes() {
       navigate('/recipes/new', { state: { imported: data } })
     } catch (err: unknown) {
       const msg = (err as { data?: { message?: string } })?.data?.message
-        || 'Could not import recipe from that URL.'
+        || t('recipes.importFailed')
       toast.error(msg)
     } finally {
       setImporting(false)
@@ -54,9 +56,9 @@ export default function Recipes() {
   })
 
   const chips: { key: Filter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'mine', label: 'Mine' },
-    { key: 'shared', label: 'Shared' },
+    { key: 'all', label: t('recipes.filterAll') },
+    { key: 'mine', label: t('recipes.filterMine') },
+    { key: 'shared', label: t('recipes.filterShared') },
   ]
 
   const chipClass = (key: Filter) =>
@@ -68,10 +70,10 @@ export default function Recipes() {
 
   const mobileActions = permissions.recipes ? (
     <div className="flex items-center gap-0.5">
-      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowImport(true)} aria-label="Import from link">
+      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setShowImport(true)} aria-label={t('recipes.importFromLink')}>
         <Link2 className="h-4 w-4" />
       </Button>
-      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => navigate('/recipes/new')} aria-label="New recipe">
+      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => navigate('/recipes/new')} aria-label={t('recipes.newRecipe')}>
         <Plus className="h-4 w-4" />
       </Button>
     </div>
@@ -81,22 +83,22 @@ export default function Recipes() {
     <div className="flex items-center gap-2">
       <Button size="sm" className="gap-1" onClick={() => setShowImport(true)}>
         <Link2 className="h-4 w-4" />
-        Import from link
+        {t('recipes.importFromLink')}
       </Button>
       <Button size="sm" className="gap-1" onClick={() => navigate('/recipes/new')}>
         <Plus className="h-4 w-4" />
-        New recipe
+        {t('recipes.newRecipe')}
       </Button>
     </div>
   ) : null
 
   return (
     <>
-      <TopBar title="Recipes" actions={mobileActions ?? undefined} />
+      <TopBar title={t('recipes.title')} actions={mobileActions ?? undefined} />
 
       <div className="max-w-5xl mx-auto p-4 space-y-4">
         <div className="hidden md:flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Recipes</h1>
+          <h1 className="text-2xl font-bold">{t('recipes.title')}</h1>
           {desktopActions}
         </div>
 
@@ -105,7 +107,7 @@ export default function Recipes() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               className="pl-9"
-              placeholder="Search recipes…"
+              placeholder={t('recipes.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -135,15 +137,15 @@ export default function Recipes() {
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <UtensilsCrossed className="h-12 w-12 text-muted-foreground/50" />
             <div>
-              <p className="font-medium">{search || filter !== 'all' ? 'No recipes found' : 'No recipes yet'}</p>
+              <p className="font-medium">{search || filter !== 'all' ? t('recipes.noneFound') : t('recipes.noneYet')}</p>
               <p className="text-sm text-muted-foreground mt-1">
                 {search || filter !== 'all'
-                  ? 'Try a different search or filter.'
-                  : 'Add your first recipe to get started.'}
+                  ? t('recipes.tryDifferent')
+                  : t('recipes.addFirst')}
               </p>
             </div>
             {!search && filter === 'all' && (
-              <Button onClick={() => navigate('/recipes/new')}>Add recipe</Button>
+              <Button onClick={() => navigate('/recipes/new')}>{t('recipes.addRecipe')}</Button>
             )}
           </div>
         ) : (
@@ -158,7 +160,7 @@ export default function Recipes() {
       <Dialog open={showImport} onOpenChange={(open) => { setShowImport(open); if (!open) setImportUrl('') }}>
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Import recipe from URL</DialogTitle>
+            <DialogTitle>{t('recipes.importTitle')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleImport} className="space-y-4">
             <Input
@@ -172,10 +174,10 @@ export default function Recipes() {
             </p>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setShowImport(false)}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={!importUrl.trim() || importing}>
-                {importing ? 'Importing…' : 'Import'}
+                {importing ? t('recipes.importing') : t('recipes.import')}
               </Button>
             </div>
           </form>

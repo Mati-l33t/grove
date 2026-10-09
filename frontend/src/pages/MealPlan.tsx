@@ -19,15 +19,11 @@ import { useRecipes } from '@/hooks/useRecipes'
 import { useActiveLists } from '@/hooks/useLists'
 import { useAuthStore } from '@/stores/authStore'
 import pb from '@/lib/pb'
+import { useTranslation } from 'react-i18next'
+import { useWeekStart } from '@/lib/timeFormat'
+import { mealLabel } from '@/lib/meals'
 import { cn, memberDisplayName } from '@/lib/utils'
 import type { MealPlan, Recipe, ShareMode } from '@/types'
-
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: 'Breakfast',
-  lunch: 'Lunch',
-  dinner: 'Dinner',
-  snack: 'Snack',
-}
 
 interface SlotTarget {
   date: string
@@ -35,11 +31,13 @@ interface SlotTarget {
 }
 
 export default function MealPlanPage() {
+  const { t } = useTranslation()
+  const weekStartsOn = useWeekStart()
   const { user, household, permissions } = useAuthStore()
   const queryClient = useQueryClient()
 
   const [weekStart, setWeekStart] = useState(() =>
-    startOfWeek(new Date(), { weekStartsOn: 1 })
+    startOfWeek(new Date(), { weekStartsOn })
   )
 
   const mealsQuery = useWeekMealPlan(weekStart)
@@ -192,11 +190,11 @@ export default function MealPlanPage() {
         shareMode,
         sharedWith,
       })
-      toast.success(editingMeal ? 'Meal updated.' : 'Meal added.')
+      toast.success(editingMeal ? t('mealplan.toast.updated') : t('mealplan.toast.added'))
       resetForm()
       setDialogMode('view')
     } catch {
-      toast.error('Failed to save meal.')
+      toast.error(t('mealplan.toast.saveFailed'))
     }
   }
 
@@ -204,11 +202,11 @@ export default function MealPlanPage() {
     const isLast = currentSlotMeals.length === 1
     try {
       await deleteMeal.mutateAsync(id)
-      toast.success('Meal removed.')
+      toast.success(t('mealplan.toast.removed'))
       if (editingMeal?.id === id) resetForm()
       if (isLast) closeSlot()
     } catch {
-      toast.error('Failed to remove meal.')
+      toast.error(t('mealplan.toast.removeFailed'))
     }
   }
 
@@ -230,22 +228,22 @@ export default function MealPlanPage() {
     if (items.length === 0 || !targetListId) return
     try {
       await addIngredientsToList.mutateAsync({ listId: targetListId, items })
-      toast.success(`Added ${items.length} ingredient${items.length !== 1 ? 's' : ''} to list.`)
+      toast.success(t('mealplan.toast.ingredientsAdded', { count: items.length }))
       setShowAddToList(false)
       setTargetListId('')
     } catch {
-      toast.error('Failed to add ingredients.')
+      toast.error(t('mealplan.toast.ingredientsFailed'))
     }
   }
 
   function getScopeLabel(meal: MealPlan): string {
-    if (meal.household) return 'Everyone'
+    if (meal.household) return t('mealplan.everyone')
     if (meal.shared_with?.length) {
       return meal.shared_with
         .map((id) => members.find((m) => m.id === id)?.name?.split(' ')[0] || '?')
         .join(', ')
     }
-    return meal.expand?.user?.name?.split(' ')[0] || 'Just me'
+    return meal.expand?.user?.name?.split(' ')[0] || t('mealplan.justMe')
   }
 
   const filteredRecipes = recipeSearch.trim()
@@ -259,15 +257,15 @@ export default function MealPlanPage() {
     (activeTab === 'recipe' && !!selectedRecipeId) ||
     (activeTab === 'custom' && !!customMeal.trim())
 
-  const weekLabel = `${format(weekStart, 'MMM d')} – ${format(addDays(weekStart, 6), 'MMM d, yyyy')}`
-  const isCurrentWeek = isThisWeek(weekStart, { weekStartsOn: 1 })
+  const weekLabel = `${format(weekStart, t('formats.monthDay'))} – ${format(addDays(weekStart, 6), t('formats.monthDayYear'))}`
+  const isCurrentWeek = isThisWeek(weekStart, { weekStartsOn })
   const weekIngredientCount = getWeekIngredients().length
   const recipeCount = meals.filter((m) => m.recipe).length
 
   return (
     <>
       <TopBar
-        title="Meal Plan"
+        title={t('mealplan.title')}
         actions={
           weekIngredientCount > 0 ? (
             <Button
@@ -277,7 +275,7 @@ export default function MealPlanPage() {
               onClick={() => { setTargetListId(''); setShowAddToList(true) }}
             >
               <ShoppingCart className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Add to list</span>
+              <span className="hidden sm:inline">{t('mealplan.addToList')}</span>
             </Button>
           ) : undefined
         }
@@ -286,7 +284,7 @@ export default function MealPlanPage() {
       <div className="max-w-5xl mx-auto w-full p-4 md:px-8 space-y-4">
         {/* Desktop page header */}
         <div className="hidden md:flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Meal Plan</h1>
+          <h1 className="text-xl font-semibold">{t('mealplan.title')}</h1>
           {weekIngredientCount > 0 && (
             <Button
               variant="outline"
@@ -294,7 +292,7 @@ export default function MealPlanPage() {
               onClick={() => { setTargetListId(''); setShowAddToList(true) }}
             >
               <ShoppingCart className="h-4 w-4 mr-1.5" />
-              Add to shopping list
+              {t('mealplan.addToShoppingList')}
             </Button>
           )}
         </div>
@@ -350,9 +348,9 @@ export default function MealPlanPage() {
               variant="outline"
               size="sm"
               className="h-7 text-xs flex-shrink-0"
-              onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+              onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn }))}
             >
-              This week
+              {t('mealplan.thisWeek')}
             </Button>
           ) : (
             <div className="w-[72px] flex-shrink-0" />
@@ -382,7 +380,7 @@ export default function MealPlanPage() {
           <DialogHeader className="px-6 pt-6 pb-3 flex-shrink-0">
             <DialogTitle>
               {slotTarget
-                ? `${MEAL_LABELS[slotTarget.mealType]} · ${format(new Date(`${slotTarget.date}T00:00:00`), 'EEE, MMM d')}`
+                ? `${mealLabel(t, slotTarget.mealType)} · ${format(new Date(`${slotTarget.date}T00:00:00`), t('formats.dayMonth'))}`
                 : ''}
             </DialogTitle>
           </DialogHeader>
@@ -406,7 +404,7 @@ export default function MealPlanPage() {
                           <button
                             onClick={() => startEdit(meal)}
                             className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                            title="Edit"
+                            title={t('mealplan.edit')}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
@@ -414,7 +412,7 @@ export default function MealPlanPage() {
                             onClick={() => handleRemoveMeal(meal.id)}
                             disabled={deleteMeal.isPending}
                             className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                            title="Remove"
+                            title={t('mealplan.remove')}
                           >
                             <X className="h-3.5 w-3.5" />
                           </button>
@@ -431,7 +429,7 @@ export default function MealPlanPage() {
                   </Button>
                 )}
                 <Button variant="outline" onClick={closeSlot} className="ml-auto">
-                  Close
+                  {t('common.close')}
                 </Button>
               </div>
             </>
@@ -471,7 +469,7 @@ export default function MealPlanPage() {
                         : 'border-transparent text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    {tab === 'recipe' ? 'From recipes' : 'Custom'}
+                    {tab === 'recipe' ? t('mealplan.fromRecipes') : t('mealplan.custom')}
                   </button>
                 ))}
               </div>
@@ -483,7 +481,7 @@ export default function MealPlanPage() {
                     <div className="relative flex-shrink-0">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                       <Input
-                        placeholder="Search recipes…"
+                        placeholder={t('mealplan.searchRecipes')}
                         value={recipeSearch}
                         onChange={(e) => setRecipeSearch(e.target.value)}
                         className="pl-8"
@@ -493,13 +491,13 @@ export default function MealPlanPage() {
                     <div className="space-y-0.5 flex-1">
                       {recipes.length === 0 ? (
                         <div className="text-center py-6">
-                          <p className="text-sm text-muted-foreground">No recipes yet.</p>
+                          <p className="text-sm text-muted-foreground">{t('mealplan.noRecipesYet')}</p>
                           <Link to="/recipes/new" className="text-xs text-primary hover:underline mt-1 block">
-                            Add a recipe first
+                            {t('mealplan.addRecipeFirst')}
                           </Link>
                         </div>
                       ) : filteredRecipes.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-6">No recipes found</p>
+                        <p className="text-sm text-muted-foreground text-center py-6">{t('mealplan.noRecipesFound')}</p>
                       ) : (
                         filteredRecipes.map((recipe: Recipe) => {
                           const isSelected = selectedRecipeId === recipe.id
@@ -527,7 +525,7 @@ export default function MealPlanPage() {
                   </>
                 ) : (
                   <Input
-                    placeholder="e.g. Leftovers, takeout, sandwiches…"
+                    placeholder={t('mealplan.customPlaceholder')}
                     value={customMeal}
                     onChange={(e) => setCustomMeal(e.target.value)}
                     autoFocus
@@ -536,7 +534,7 @@ export default function MealPlanPage() {
 
                 {household && (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Plan for</p>
+                    <p className="text-sm font-medium">{t('mealplan.planFor')}</p>
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
@@ -548,7 +546,7 @@ export default function MealPlanPage() {
                             : 'border-border text-muted-foreground hover:text-foreground'
                         )}
                       >
-                        Everyone
+                        {t('mealplan.everyone')}
                       </button>
                       {members.filter((m) => m.id !== user?.id).map((member) => {
                         const isSelected = shareMode === 'members' && sharedWith.includes(member.id)
@@ -582,7 +580,7 @@ export default function MealPlanPage() {
                             : 'border-border text-muted-foreground hover:text-foreground'
                         )}
                       >
-                        Just me
+                        {t('mealplan.justMe')}
                       </button>
                     </div>
                   </div>
@@ -592,15 +590,15 @@ export default function MealPlanPage() {
               {/* Footer */}
               <div className="px-6 py-4 border-t flex-shrink-0 flex justify-end gap-2">
                 <Button variant="outline" onClick={currentSlotMeals.length > 0 ? backToView : closeSlot}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   disabled={!canSave || setMeal.isPending}
                   onClick={handleSave}
                 >
                   {setMeal.isPending
-                    ? 'Saving…'
-                    : editingMeal ? 'Save changes' : 'Add meal'}
+                    ? t('common.saving')
+                    : editingMeal ? t('settings.saveChanges') : t('mealplan.addMeal')}
                 </Button>
               </div>
             </>
@@ -615,24 +613,26 @@ export default function MealPlanPage() {
       >
         <DialogContent className="max-w-sm max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Add ingredients to list</DialogTitle>
+            <DialogTitle>{t('mealplan.addIngredientsToList')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Adds ingredients from {recipeCount} recipe{recipeCount !== 1 ? 's' : ''} planned
-            this week ({weekIngredientCount} item{weekIngredientCount !== 1 ? 's' : ''}).
+            {t('mealplan.addsIngredients', {
+              recipes: t('mealplan.recipeCount', { count: recipeCount }),
+              items: t('mealplan.itemCount', { count: weekIngredientCount }),
+            })}
           </p>
           {shoppingLists.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No shopping lists found.{' '}
+              {t('mealplan.noShoppingLists')}{' '}
               <Link to="/lists" className="text-primary hover:underline">
-                Create one first.
+                {t('mealplan.createFirst')}
               </Link>
             </p>
           ) : (
             <div className="space-y-4">
               <Select value={targetListId} onValueChange={setTargetListId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a shopping list" />
+                  <SelectValue placeholder={t('mealplan.chooseShoppingList')} />
                 </SelectTrigger>
                 <SelectContent>
                   {shoppingLists.map((list) => (
@@ -647,15 +647,15 @@ export default function MealPlanPage() {
                   variant="outline"
                   onClick={() => { setShowAddToList(false); setTargetListId('') }}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   disabled={!targetListId || addIngredientsToList.isPending}
                   onClick={handleAddToList}
                 >
                   {addIngredientsToList.isPending
-                    ? 'Adding…'
-                    : `Add ${weekIngredientCount} items`}
+                    ? t('mealplan.adding')
+                    : t('mealplan.addNItems', { count: weekIngredientCount })}
                 </Button>
               </div>
             </div>

@@ -1,5 +1,7 @@
 import { format, addDays, isToday } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { mealLabel } from '@/lib/meals'
 import { MEAL_TYPES } from '@/lib/constants'
 import MealSlot from './MealSlot'
 import type { MealPlan } from '@/types'
@@ -11,14 +13,8 @@ interface Props {
   readOnly?: boolean
 }
 
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: 'Breakfast',
-  lunch: 'Lunch',
-  dinner: 'Dinner',
-  snack: 'Snack',
-}
-
 export default function WeekView({ weekStart, meals, onSlotClick, readOnly }: Props) {
+  const { t } = useTranslation()
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
 
   return (
@@ -51,7 +47,7 @@ export default function WeekView({ weekStart, meals, onSlotClick, readOnly }: Pr
           >
             <div className="flex items-center pr-1">
               <span className="text-xs font-medium text-muted-foreground">
-                {MEAL_LABELS[mealType]}
+                {mealLabel(t, mealType)}
               </span>
             </div>
             {days.map((day) => {

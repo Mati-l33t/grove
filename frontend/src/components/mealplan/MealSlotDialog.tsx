@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { Pencil, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import { mealLabel } from '@/lib/meals'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,13 +15,6 @@ import { useAuthStore } from '@/stores/authStore'
 import { cn, memberDisplayName } from '@/lib/utils'
 import type { MealPlan, Recipe, ShareMode } from '@/types'
 
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: 'Breakfast',
-  lunch: 'Lunch',
-  dinner: 'Dinner',
-  snack: 'Snack',
-}
-
 interface Props {
   open: boolean
   onClose: () => void
@@ -29,6 +24,7 @@ interface Props {
 }
 
 export default function MealSlotDialog({ open, onClose, date, mealType, meals }: Props) {
+  const { t } = useTranslation()
   const { user, household, permissions } = useAuthStore()
   const { data: members = [] } = useHouseholdMembers()
   const { data: recipes = [] } = useRecipes()
@@ -114,11 +110,11 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
         shareMode,
         sharedWith,
       })
-      toast.success(editingMeal ? 'Meal updated.' : 'Meal added.')
+      toast.success(editingMeal ? t('mealplan.toast.updated') : t('mealplan.toast.added'))
       resetForm()
       setDialogMode('view')
     } catch {
-      toast.error('Failed to save meal.')
+      toast.error(t('mealplan.toast.saveFailed'))
     }
   }
 
@@ -126,22 +122,22 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
     const isLast = meals.length === 1
     try {
       await deleteMeal.mutateAsync(meal.id)
-      toast.success('Meal removed.')
+      toast.success(t('mealplan.toast.removed'))
       if (editingMeal?.id === meal.id) resetForm()
       if (isLast) onClose()
     } catch {
-      toast.error('Failed to remove meal.')
+      toast.error(t('mealplan.toast.removeFailed'))
     }
   }
 
   function getScopeLabel(meal: MealPlan): string {
-    if (meal.household) return 'Everyone'
+    if (meal.household) return t('mealplan.everyone')
     if (meal.shared_with?.length) {
       return meal.shared_with
         .map((id) => members.find((m) => m.id === id)?.name?.split(' ')[0] || '?')
         .join(', ')
     }
-    return meal.expand?.user?.name?.split(' ')[0] || 'Just me'
+    return meal.expand?.user?.name?.split(' ')[0] || t('mealplan.justMe')
   }
 
   const filteredRecipes = recipeSearch.trim()
@@ -155,7 +151,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
     (activeTab === 'recipe' && !!selectedRecipeId) ||
     (activeTab === 'custom' && !!customMeal.trim())
 
-  const title = `${MEAL_LABELS[mealType] ?? mealType} · ${format(new Date(`${date}T00:00:00`), 'EEE, MMM d')}`
+  const title = `${mealLabel(t, mealType)} · ${format(new Date(`${date}T00:00:00`), t('formats.dayMonth'))}`
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -182,7 +178,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                         <button
                           onClick={() => startEdit(meal)}
                           className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                          title="Edit"
+                          title={t('mealplan.edit')}
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -190,7 +186,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                           onClick={() => handleRemove(meal)}
                           disabled={deleteMeal.isPending}
                           className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          title="Remove"
+                          title={t('mealplan.remove')}
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -207,7 +203,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                 </Button>
               )}
               <Button variant="outline" onClick={onClose} className="ml-auto">
-                Close
+                {t('common.close')}
               </Button>
             </div>
           </>
@@ -245,7 +241,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  {tab === 'recipe' ? 'From recipes' : 'Custom'}
+                  {tab === 'recipe' ? t('mealplan.fromRecipes') : t('mealplan.custom')}
                 </button>
               ))}
             </div>
@@ -256,7 +252,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                   <div className="relative flex-shrink-0">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                     <Input
-                      placeholder="Search recipes…"
+                      placeholder={t('mealplan.searchRecipes')}
                       value={recipeSearch}
                       onChange={(e) => setRecipeSearch(e.target.value)}
                       className="pl-8"
@@ -266,13 +262,13 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                   <div className="space-y-0.5 flex-1">
                     {recipes.length === 0 ? (
                       <div className="text-center py-6">
-                        <p className="text-sm text-muted-foreground">No recipes yet.</p>
+                        <p className="text-sm text-muted-foreground">{t('mealplan.noRecipesYet')}</p>
                         <Link to="/recipes/new" className="text-xs text-primary hover:underline mt-1 block">
-                          Add a recipe first
+                          {t('mealplan.addRecipeFirst')}
                         </Link>
                       </div>
                     ) : filteredRecipes.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-6">No recipes found</p>
+                      <p className="text-sm text-muted-foreground text-center py-6">{t('mealplan.noRecipesFound')}</p>
                     ) : (
                       filteredRecipes.map((recipe: Recipe) => {
                         const isSelected = selectedRecipeId === recipe.id
@@ -300,7 +296,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                 </>
               ) : (
                 <Input
-                  placeholder="e.g. Leftovers, takeout, sandwiches…"
+                  placeholder={t('mealplan.customPlaceholder')}
                   value={customMeal}
                   onChange={(e) => setCustomMeal(e.target.value)}
                   autoFocus
@@ -309,7 +305,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
 
               {household && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Plan for</p>
+                  <p className="text-sm font-medium">{t('mealplan.planFor')}</p>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -321,7 +317,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                           : 'border-border text-muted-foreground hover:text-foreground'
                       )}
                     >
-                      Everyone
+                      {t('mealplan.everyone')}
                     </button>
                     {members.filter((m) => m.id !== user?.id).map((member) => {
                       const isSelected = shareMode === 'members' && sharedWith.includes(member.id)
@@ -355,7 +351,7 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
                           : 'border-border text-muted-foreground hover:text-foreground'
                       )}
                     >
-                      Just me
+                      {t('mealplan.justMe')}
                     </button>
                   </div>
                 </div>
@@ -364,10 +360,10 @@ export default function MealSlotDialog({ open, onClose, date, mealType, meals }:
 
             <div className="px-6 py-4 border-t flex-shrink-0 flex justify-end gap-2">
               <Button variant="outline" onClick={meals.length > 0 ? backToView : onClose}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button disabled={!canSave || setMeal.isPending} onClick={handleSave}>
-                {setMeal.isPending ? 'Saving…' : editingMeal ? 'Save changes' : 'Add meal'}
+                {setMeal.isPending ? t('common.saving') : editingMeal ? t('settings.saveChanges') : t('mealplan.addMeal')}
               </Button>
             </div>
           </>

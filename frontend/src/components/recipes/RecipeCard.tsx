@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Clock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -5,6 +6,7 @@ import pb from '@/lib/pb'
 import type { Recipe } from '@/types'
 
 export default function RecipeCard({ recipe }: { recipe: Recipe }) {
+  const { t } = useTranslation()
   const imageUrl = recipe.image
     ? pb.files.getURL(recipe as never, recipe.image, { thumb: '400x300' })
     : null
@@ -31,7 +33,7 @@ export default function RecipeCard({ recipe }: { recipe: Recipe }) {
         )}
         {recipe.household && (
           <span className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">
-            Shared
+            {t('recipes.shared')}
           </span>
         )}
       </div>

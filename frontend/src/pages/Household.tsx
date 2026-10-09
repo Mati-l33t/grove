@@ -5,6 +5,9 @@ import { cn } from '@/lib/utils'
 import { format, startOfWeek } from 'date-fns'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import { useWeekStart } from '@/lib/timeFormat'
+import { mealLabel } from '@/lib/meals'
 import TopBar from '@/components/layout/TopBar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/stores/authStore'
@@ -16,10 +19,12 @@ import pb from '@/lib/pb'
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const
 
 export default function HouseholdPage() {
+  const { t } = useTranslation()
+  const weekStartsOn = useWeekStart()
   const { user, household } = useAuthStore()
   const membersQuery = useHouseholdMembers()
   const listsQuery = useActiveLists()
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+  const weekStart = startOfWeek(new Date(), { weekStartsOn })
   const mealsQuery = useWeekMealPlan(weekStart)
   const queryClient = useQueryClient()
 
@@ -31,9 +36,9 @@ export default function HouseholdPage() {
     try {
       await pb.collection('users').update(memberId, { role })
       await queryClient.invalidateQueries({ queryKey: ['household-members'] })
-      toast.success(`Role updated to ${role}.`)
+      toast.success(t('household.toast.roleUpdated', { role: role === 'adult' ? t('household.roleAdult') : t('household.roleChild') }))
     } catch {
-      toast.error('Failed to update role.')
+      toast.error(t('household.toast.roleFailed'))
     } finally {
       setTogglingRole(null)
     }
@@ -56,13 +61,13 @@ export default function HouseholdPage() {
   if (!household) {
     return (
       <>
-        <TopBar title="Household" />
+        <TopBar title={t('household.title')} />
         <div className="max-w-2xl mx-auto w-full p-4 md:px-8">
           <div className="rounded-xl border border-dashed p-12 text-center">
             <Users className="h-8 w-8 mx-auto mb-3 text-muted-foreground opacity-40" />
-            <p className="text-sm text-muted-foreground mb-3">You're not part of a household yet.</p>
+            <p className="text-sm text-muted-foreground mb-3">{t('household.notInHousehold')}</p>
             <Link to="/settings/household" className="text-sm text-primary hover:underline">
-              Create or join one →
+              {t('household.createOrJoin')}
             </Link>
           </div>
         </div>
@@ -72,14 +77,14 @@ export default function HouseholdPage() {
 
   const InviteCode = () => (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground flex-shrink-0">Invite code:</span>
+      <span className="text-xs text-muted-foreground flex-shrink-0">{t('household.inviteCode')}</span>
       <code className="font-mono text-sm font-semibold tracking-widest bg-muted px-2.5 py-1 rounded flex-1 md:flex-none">
         {household.invite_code}
       </code>
       <button
         onClick={copyCode}
         className="h-7 w-7 flex items-center justify-center rounded-md border hover:bg-accent transition-colors flex-shrink-0"
-        aria-label="Copy invite code"
+        aria-label={t('settings.copyInviteCode')}
       >
         {copied
           ? <Check className="h-3.5 w-3.5 text-primary" />
@@ -90,13 +95,13 @@ export default function HouseholdPage() {
 
   return (
     <>
-      <TopBar title={(household as { name?: string }).name || 'Household'} />
+      <TopBar title={(household as { name?: string }).name || t('household.title')} />
 
       <div className="max-w-4xl mx-auto w-full p-4 md:px-8 space-y-6">
         {/* Desktop header */}
         <div className="hidden md:flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold">{(household as { name?: string }).name || 'Household'}</h1>
+            <h1 className="text-xl font-semibold">{(household as { name?: string }).name || t('household.title')}</h1>
             <p className="text-sm text-muted-foreground">
               {members.length} member{members.length !== 1 ? 's' : ''}
             </p>
@@ -150,7 +155,7 @@ export default function HouseholdPage() {
                       <p className="font-semibold truncate">
                         {member.name || member.email}
                         {isMe && (
-                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">you</span>
+                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">{t('household.you')}</span>
                         )}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">{member.email}</p>
@@ -177,7 +182,7 @@ export default function HouseholdPage() {
                                 : 'text-muted-foreground/40 cursor-default'
                           )}
                         >
-                          {role}
+                          {role === 'adult' ? t('household.roleAdult') : t('household.roleChild')}
                         </button>
                       )
                     })}
@@ -186,7 +191,7 @@ export default function HouseholdPage() {
                       to={`/meal-plan`}
                       className="text-xs text-primary hover:underline flex-shrink-0"
                     >
-                      Plan meals
+                      {t('household.planMeals')}
                     </Link>
                   </div>
 
@@ -194,12 +199,12 @@ export default function HouseholdPage() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                       <CheckSquare className="h-3 w-3" />
-                      Assigned lists
+                      {t('household.assignedLists')}
                     </p>
                     {listsQuery.isLoading ? (
                       <Skeleton className="h-8 w-full" />
                     ) : assignedLists.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic">Nothing assigned</p>
+                      <p className="text-xs text-muted-foreground italic">{t('household.nothingAssigned')}</p>
                     ) : (
                       <div className="space-y-0.5">
                         {assignedLists.map((list) => {
@@ -229,12 +234,12 @@ export default function HouseholdPage() {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                       <UtensilsCrossed className="h-3 w-3" />
-                      Today's meals
+                      {t('household.todaysMeals')}
                     </p>
                     {mealsQuery.isLoading ? (
                       <Skeleton className="h-8 w-full" />
                     ) : todayMeals.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic">Nothing planned today</p>
+                      <p className="text-xs text-muted-foreground italic">{t('household.nothingPlanned')}</p>
                     ) : (
                       <div className="space-y-0.5">
                         {MEAL_TYPES.map((type) => {
@@ -257,7 +262,7 @@ export default function HouseholdPage() {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                         <UtensilsCrossed className="h-3 w-3" />
-                        This week
+                        {t('household.thisWeek')}
                       </p>
                       <div className="space-y-0.5">
                         {weekMealsForMember.slice(0, 3).map((meal) => {
@@ -266,7 +271,7 @@ export default function HouseholdPage() {
                           return (
                             <div key={meal.id} className="flex gap-2 text-xs px-2">
                               <span className="text-muted-foreground w-8 flex-shrink-0">{dayLabel}</span>
-                              <span className="text-muted-foreground capitalize w-14 flex-shrink-0">{meal.meal_type}</span>
+                              <span className="text-muted-foreground w-14 flex-shrink-0">{mealLabel(t, meal.meal_type)}</span>
                               <span className="truncate font-medium">{label}</span>
                             </div>
                           )
@@ -282,7 +287,7 @@ export default function HouseholdPage() {
 
         <div className="text-right">
           <Link to="/settings/household" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
-            Manage household →
+            {t('household.manage')}
           </Link>
         </div>
       </div>
