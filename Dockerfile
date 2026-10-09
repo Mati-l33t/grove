@@ -32,6 +32,7 @@ RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "arm64" || echo "amd64") \
 
 COPY package.json  /app/package.json
 COPY reminder.js   /app/reminder.js
+COPY server-i18n.js /app/server-i18n.js
 RUN cd /app && npm install --silent
 
 # Pre-built frontend (seeded to data volume by entrypoint on every start)

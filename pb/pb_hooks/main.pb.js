@@ -66,6 +66,13 @@ routerAdd("POST", "/api/grove/test-email", (c) => {
         return c.json(400, { message: "Mail is not configured or not enabled." })
     }
 
+    // Test email is sent in the admin's own language (falls back to English)
+    const testMessages = {
+        en: { subject: "Grove — test email", html: "<p>Your Grove mail server is configured correctly.</p>" },
+        fr: { subject: "Grove — e-mail de test", html: "<p>Votre serveur de messagerie Grove est correctement configuré.</p>" },
+    }
+    const testMsg = testMessages[authRecord.getString("language")] || testMessages.en
+
     try {
         $app.newMailClient().send(new MailerMessage({
             from: {
@@ -73,8 +80,8 @@ routerAdd("POST", "/api/grove/test-email", (c) => {
                 address: smtpRecords[0].getString("from_address"),
             },
             to: [{ address: authRecord.email() }],
-            subject: "Grove — test email",
-            html: "<p>Your Grove mail server is configured correctly.</p>",
+            subject: testMsg.subject,
+            html: testMsg.html,
         }))
         return c.json(200, { message: "Test email sent to " + authRecord.email() })
     } catch (err) {
@@ -278,9 +285,11 @@ routerAdd("POST", "/api/grove/chat", (c) => {
     }
 
     var householdId = ""
+    var userLang = ""
     try {
         var u = $app.findRecordById("users", authRecord.id)
         householdId = u.getString("household")
+        userLang = u.getString("language")
     } catch (_) {}
 
     var now = new Date()
@@ -289,6 +298,11 @@ routerAdd("POST", "/api/grove/chat", (c) => {
         String(now.getDate()).padStart(2, "0")
 
     var systemPrompt = "You are Grove Assistant, a helpful family organizer. You help users manage their lists, calendar events, meal planning, recipes, and school data for their children. Today is " + todayStr + ". Use the available tools to take real actions when asked. Be concise and friendly."
+
+    var replyLanguages = { fr: "French" }
+    if (replyLanguages[userLang]) {
+        systemPrompt += " Always reply in " + replyLanguages[userLang] + "."
+    }
 
     var tools = [
         {
